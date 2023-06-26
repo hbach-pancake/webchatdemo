@@ -291,7 +291,20 @@ const ConversationScreen = ({
       );
       // Xóa tài liệu
       await deleteDoc(documentRef);
-      window.location.href = "https://webchatdemo.vercel.app/";
+
+      const querySnapshot3 = await getDocs(collection(db, "conversations"));
+      let firstMessageId2 = "";
+      if (querySnapshot3.docs.length == 0) {
+        window.location.href = `http://localhost:3000`;
+      } else {
+        querySnapshot3.forEach(async (docSnapshot) => {
+          if (!firstMessageId2) {
+            const messagesId2 = docSnapshot.id;
+            window.location.href = `http://localhost:3000/conversations/${messagesId2}`;
+            return;
+          }
+        });
+      }
     } catch (error) {
       console.error("Lỗi khi xóa tài liệu:", error);
     }
