@@ -291,7 +291,7 @@ const ConversationScreen = ({
       );
       // Xóa tài liệu
       await deleteDoc(documentRef);
-      window.location.href = "http://localhost:3000/";
+      window.location.href = "https://webchatdemo.vercel.app/";
     } catch (error) {
       console.error("Lỗi khi xóa tài liệu:", error);
     }
