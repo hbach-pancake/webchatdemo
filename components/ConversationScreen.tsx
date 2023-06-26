@@ -39,6 +39,7 @@ import {
   getDownloadURL,
   getStorage,
   ref,
+  uploadBytes,
   uploadBytesResumable,
 } from "firebase/storage";
 import Picker from "@emoji-mart/react";
@@ -295,12 +296,12 @@ const ConversationScreen = ({
       const querySnapshot3 = await getDocs(collection(db, "conversations"));
       let firstMessageId2 = "";
       if (querySnapshot3.docs.length == 0) {
-        window.location.href = `https://webchatdemo.vercel.app/`;
+        window.location.href = `http://localhost:3000`;
       } else {
         querySnapshot3.forEach(async (docSnapshot) => {
           if (!firstMessageId2) {
             const messagesId2 = docSnapshot.id;
-            window.location.href = `https://webchatdemo.vercel.app/conversations/${messagesId2}`;
+            window.location.href = `http://localhost:3000/conversations/${messagesId2}`;
             return;
           }
         });
@@ -341,54 +342,47 @@ const ConversationScreen = ({
     contentType8: "video/avi",
   };
   useEffect(() => {
-    if (selectedFile) {
-      if (
-        selectedFile.name.includes(".jpg") ||
-        selectedFile.name.includes(".heic") ||
-        selectedFile.name.includes(".png") ||
-        selectedFile.name.includes(".jpeg") ||
-        selectedFile.name.includes(".svg") ||
-        selectedFile.name.includes(".gif")
-      ) {
-        const storageRef = ref(storage, `files/${selectedFile.name}`);
-        const uploadTask = uploadBytesResumable(
-          storageRef,
-          selectedFile,
-          metadata
-        );
-        uploadTask.on("state_changed", async (snapshot) => {
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          if (progress == 100) {
-            const downloadURL = await getDownloadURL(storageRef);
-            setUploadedURL(downloadURL);
-            setIsURLUploaded(true);
-          }
-        });
-      } else if (
-        selectedFile.name.includes(".mp4") ||
-        selectedFile.name.includes(".mov") ||
-        selectedFile.name.includes(".avi")
-      ) {
-        const storageRef = ref(storage, `videos/${selectedFile.name}`);
-        const uploadTask = uploadBytesResumable(
-          storageRef,
-          selectedFile,
-          metadata
-        );
-        uploadTask.on("state_changed", async (snapshot) => {
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          if (progress == 100) {
-            const downloadURL = await getDownloadURL(storageRef);
-            setUploadedURL(downloadURL);
-            setIsURLUploaded(true);
-          }
-        });
-      } else {
-        alert("định dạng tệp không được hỗ trợ");
+    const fetchData = async () => {
+      if (selectedFile) {
+        if (
+          selectedFile.name.includes(".jpg") ||
+          selectedFile.name.includes(".heic") ||
+          selectedFile.name.includes(".png") ||
+          selectedFile.name.includes(".jpeg") ||
+          selectedFile.name.includes(".svg") ||
+          selectedFile.name.includes(".gif")
+        ) {
+          const storageRef = ref(storage, `files/${selectedFile.name}`);
+          const uploadTask = await uploadBytes(
+            storageRef,
+            selectedFile,
+            metadata
+          );
+          const downloadURL = await getDownloadURL(storageRef);
+          console.log(downloadURL, "downloadURL");
+          setUploadedURL(downloadURL);
+          setIsURLUploaded(true);
+        } else if (
+          selectedFile.name.includes(".mp4") ||
+          selectedFile.name.includes(".mov") ||
+          selectedFile.name.includes(".avi")
+        ) {
+          const storageRef = ref(storage, `videos/${selectedFile.name}`);
+          const uploadTask = await uploadBytes(
+            storageRef,
+            selectedFile,
+            metadata
+          );
+          const downloadURL = await getDownloadURL(storageRef);
+          console.log(downloadURL, "downloadURL");
+          setUploadedURL(downloadURL);
+          setIsURLUploaded(true);
+        } else {
+          alert("định dạng tệp không được hỗ trợ");
+        }
       }
-    }
+    };
+    fetchData();
   }, [selectedFile]);
 
   const handleAttachFileClick = () => {
