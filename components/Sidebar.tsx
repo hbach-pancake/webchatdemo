@@ -123,17 +123,22 @@ const Sidebar = () => {
 
   const renderMessageWithUser = async () => {
     if (EmailValidator.validate(recipientEmail) && !isInvitingSelf) {
-      const emailExistsQuery = query(
-        collection(db, "messages"),
-        where("user", "==", recipientEmail)
-      );
-      const emailExistsSnapshot = await getDocs(emailExistsQuery);
-      if (emailExistsSnapshot.empty) {
-        alert("Email không tồn tại hoặc chưa có cuộc trò chuyện này");
-        return;
-      }
-      const userData = emailExistsSnapshot.docs[0].data();
-      return router.push(`/conversations/${userData.conversation_id}`);
+      const conversationsRef = collection(db, "conversations");
+      const querySnapshot = await getDocs(conversationsRef);
+
+      let matchingConversations = "";
+      querySnapshot.forEach((doc) => {
+        const conversation = doc.data();
+        const users = conversation.users;
+
+        if (
+          users.includes(loggedInUser?.email) &&
+          users.includes(recipientEmail)
+        ) {
+          matchingConversations = doc.id;
+        }
+      });
+      return router.push(`/conversations/${matchingConversations}`);
     }
     return null;
   };
@@ -149,6 +154,8 @@ const Sidebar = () => {
       await addDoc(collection(db, "conversations"), {
         users: [loggedInUser?.email, recipientEmail],
       });
+    } else {
+      alert("email k hợp lệ");
     }
     closeNewConversationDialog();
   };
