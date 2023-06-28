@@ -85,7 +85,7 @@ const StyledHeaderIcon = styled.div`
 `;
 
 const StyledMessageContainer = styled.div`
-  padding: 30px;
+  padding: 30px 30px 30px 0;
   min-height: 90vh;
   position: relative;
 `;

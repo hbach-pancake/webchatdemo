@@ -4,7 +4,13 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import styled from "styled-components";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import React, { useState } from "react";
-import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+} from "firebase/firestore";
 import Tooltip from "@mui/material/Tooltip";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 
@@ -47,6 +53,16 @@ const StyledD = styled.div`
   cursor: pointer;
 `;
 
+const StyledR = styled.div`
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+`;
+
+const StyledR2 = styled(StyledR)`
+  align-items: center;
+`;
+
 const StyledDev = styled.div`
   padding: 8px 12px;
   background-color: #0084ff;
@@ -76,10 +92,51 @@ const StyledSum = styled.div`
   cursor: pointer;
 `;
 
+const StyledAvt = styled.img`
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 10px;
+`;
+
 const Message = ({ message }: { message: IMessage }) => {
   const [loggedInUser, _loading, _error] = useAuthState(auth);
   const isSentMessage = loggedInUser?.email === message.user;
   const [isHovered, setIsHovered] = useState(false);
+  const [otherUserPhotoURL, setOtherUserPhotoURL] = useState("");
+
+  if (loggedInUser?.email !== message.user) {
+    const fetchData = async () => {
+      try {
+        const documentSnapshot = await getDocs(collection(db, "users"));
+        const promises = documentSnapshot.docs.map(async (docSnapshot) => {
+          const documentId = docSnapshot.id;
+          const documentRef = doc(db, "users", documentId);
+          const documentSnapshotUsers = await getDoc(documentRef);
+          if (documentSnapshotUsers.exists()) {
+            const documentData = documentSnapshotUsers.data();
+            const documentDataMail = documentData.email;
+            if (documentDataMail === message.user) {
+              return documentData.photoURL;
+            }
+          }
+          return null;
+        });
+        const results = await Promise.all(promises);
+        return results.find((photoURL) => photoURL !== null);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu:", error);
+        return null;
+      }
+    };
+
+    const fetchDataAndAssignValue = async () => {
+      const url = await fetchData();
+      setOtherUserPhotoURL(url);
+    };
+
+    fetchDataAndAssignValue();
+  }
 
   const MessageType = isSentMessage ? StyledSend : StyledReceive;
   // const MessageActive = isSentMessage ? StyledDev : StyledD;
@@ -170,6 +227,7 @@ const Message = ({ message }: { message: IMessage }) => {
                 controls
                 style={{
                   display: "block",
+                  height: "40px",
                 }}
               ></audio>
             </StyledD>
@@ -187,20 +245,22 @@ const Message = ({ message }: { message: IMessage }) => {
           message.text.includes(".svg") ||
           message.text.includes(".gif")) ? (
         <StyledTooltip title={message.sent_at} placement="top">
-          <StyledD>
+          <StyledR>
+            <StyledAvt src={otherUserPhotoURL} />
             <StyledMessageImg
               src={message.text}
               alt="Message Image"
               onClick={() => window.open(message.text, "_blank")}
             />
-          </StyledD>
+          </StyledR>
         </StyledTooltip>
       ) : message.text &&
         (message.text.includes(".mov") ||
           message.text.includes(".mp4") ||
           message.text.includes(".avi")) ? (
         <StyledTooltip title={message.sent_at} placement="top">
-          <StyledD>
+          <StyledR>
+            <StyledAvt src={otherUserPhotoURL} />
             <video
               src={message.text}
               controls
@@ -211,23 +271,28 @@ const Message = ({ message }: { message: IMessage }) => {
                 display: "block",
               }}
             ></video>
-          </StyledD>
+          </StyledR>
         </StyledTooltip>
       ) : message.text && message.text.includes(".mp3") ? (
         <StyledTooltip title={message.sent_at} placement="top">
-          <StyledD>
+          <StyledR2>
+            <StyledAvt src={otherUserPhotoURL} />
             <audio
               src={message.text}
               controls
               style={{
                 display: "block",
+                height: "40px",
               }}
             ></audio>
-          </StyledD>
+          </StyledR2>
         </StyledTooltip>
       ) : (
         <StyledTooltip title={message.sent_at} placement="top">
-          <StyledDevIt>{message.text}</StyledDevIt>
+          <StyledR2>
+            <StyledAvt src={otherUserPhotoURL} />
+            <StyledDevIt>{message.text}</StyledDevIt>
+          </StyledR2>
         </StyledTooltip>
       )}
     </MessageType>
