@@ -139,13 +139,6 @@ const StyledInfomation = styled.div`
   padding-left: 15px;
 `;
 
-const StyleSpan = styled.div`
-  padding-top: 10px;
-  text-align: center;
-  font-weight: bold;
-  cursor: pointer;
-`;
-
 const StyleSpanName = styled.div`
   padding-top: 10px;
   text-align: center;
@@ -388,11 +381,11 @@ const ConversationScreen = ({
     }
   };
 
-  const sendMessageOnClick: MouseEventHandler<HTMLButtonElement> = (event) => {
-    event.preventDefault();
-    if (!newMessage) return;
-    addMessageToDbAndUpdateLastSeen();
-  };
+  // const sendMessageOnClick: MouseEventHandler<HTMLButtonElement> = (event) => {
+  //   event.preventDefault();
+  //   if (!newMessage) return;
+  //   addMessageToDbAndUpdateLastSeen();
+  // };
 
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -694,7 +687,7 @@ const ConversationScreen = ({
             onChange={(event) => setNewMessage(event.target.value)}
             onKeyDown={sendMessageOnEnter}
           />
-          <IconButton onClick={sendMessageOnClick} disabled={!newMessage}>
+          <IconButton disabled={!newMessage}>
             <SendIcon1 />
           </IconButton>
           <IconButton onClick={handleClick}>
