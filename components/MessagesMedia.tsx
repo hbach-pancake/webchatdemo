@@ -3,7 +3,7 @@ import styled from "styled-components";
 import React from "react";
 
 const StyledImgAndVideo = styled.div`
-  width: 32%;
+  width: 49%;
   aspect-ratio: 1/1;
   padding: 5px;
 `;
@@ -35,7 +35,11 @@ const MessagesMedia = ({ message }: { message: IMessage }) => {
         message.text.includes(".jpeg") ||
         message.text.includes(".svg") ||
         message.text.includes(".gif") ? (
-          <StyledMessageImg src={message.text} alt="Message Image" />
+          <StyledMessageImg
+            src={message.text}
+            alt="Message Image"
+            onClick={() => window.open(message.text, "_blank")}
+          />
         ) : message.text.includes(".mov") ||
           message.text.includes(".mp4") ||
           message.text.includes(".avi") ? (

@@ -43,7 +43,9 @@ const StyledMessageImg = styled.img`
   display: block;
 `;
 
-const StyledD = styled.div``;
+const StyledD = styled.div`
+  cursor: pointer;
+`;
 
 const StyledDev = styled.div`
   padding: 8px 12px;
@@ -135,7 +137,11 @@ const Message = ({ message }: { message: IMessage }) => {
           message.text.includes(".gif")) ? (
           <StyledTooltip title={message.sent_at} placement="top">
             <StyledD>
-              <StyledMessageImg src={message.text} alt="Message Image" />
+              <StyledMessageImg
+                src={message.text}
+                alt="Message Image pls"
+                onClick={() => window.open(message.text, "_blank")}
+              />
             </StyledD>
           </StyledTooltip>
         ) : message.text &&
@@ -182,7 +188,11 @@ const Message = ({ message }: { message: IMessage }) => {
           message.text.includes(".gif")) ? (
         <StyledTooltip title={message.sent_at} placement="top">
           <StyledD>
-            <StyledMessageImg src={message.text} alt="Message Image" />
+            <StyledMessageImg
+              src={message.text}
+              alt="Message Image"
+              onClick={() => window.open(message.text, "_blank")}
+            />
           </StyledD>
         </StyledTooltip>
       ) : message.text &&
