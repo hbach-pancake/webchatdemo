@@ -5,56 +5,61 @@ import styled from "styled-components";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import React, { useState } from "react";
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
+import Tooltip from "@mui/material/Tooltip";
 
-const StyleMessage = styled.p`
+const DeleteButton = styled(DeleteForeverIcon)`
+  position: absolute;
+  top: calc(50% - 12px);
+  left: 0px;
+  color: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  z-index: 2;
+`;
+
+const StyleMessage = styled.div`
   width: fit-content;
   word-break: break-all;
-  max-width: 90%;
-  min-width: 30%;
-  padding: 15px 15px 30px;
-  border-radius: 8px;
-  margin: 10px;
-  position: relative;
+  max-width: 30%;
+  margin: 5px;
+  border-radius: 30px;
 `;
 const StyledSend = styled(StyleMessage)`
   margin-left: auto;
-  background-color: #dcf8c6;
+  position: relative;
   height: 100%;
+  color: #fff;
+  padding-left: 30px;
 `;
 
 const StyledReceive = styled(StyleMessage)`
-  background-color: whitesmoke;
-`;
-
-const StyledTimestamp = styled.span`
-  color: gray;
-  padding: 10px;
-  font-size: small;
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  text-align: center;
+  background-color: #e4e6eb;
+  padding: 8px 12px;
+  color: #000;
 `;
 
 const StyledMessageImg = styled.img`
   width: 100%;
   height: auto;
+  display: block;
 `;
 
-const DeleteButton = styled(DeleteForeverIcon)`
-  position: absolute;
-  top: 50%;
-  right: -20px;
-  transform: translateY(-50%);
-  cursor: pointer;
+const StyledD = styled.div``;
+
+const StyledDev = styled.div`
+  padding: 8px 12px;
+  background-color: #0084ff;
+  border-radius: 18px;
+`;
+const StyledTooltip = styled(Tooltip)`
+  position: relative;
 `;
 
 const Message = ({ message }: { message: IMessage }) => {
   const [loggedInUser, _loading, _error] = useAuthState(auth);
-  const [isHovered, setIsHovered] = useState(false);
   const isSentMessage = loggedInUser?.email === message.user;
-
+  const [isHovered, setIsHovered] = useState(false);
   const MessageType = isSentMessage ? StyledSend : StyledReceive;
+  const MessageActive = isSentMessage ? StyledDev : StyledD;
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -68,6 +73,7 @@ const Message = ({ message }: { message: IMessage }) => {
     try {
       // Lấy tất cả các tài liệu trong collection "messages"
       const querySnapshot = await getDocs(collection(db, "messages"));
+      console.log("id", querySnapshot);
       querySnapshot.forEach((docSnapshot) => {
         const documentId = docSnapshot.id;
         if (documentId == message.id) {
@@ -93,20 +99,46 @@ const Message = ({ message }: { message: IMessage }) => {
         message.text.includes(".jpeg") ||
         message.text.includes(".svg") ||
         message.text.includes(".gif")) ? (
-        <StyledMessageImg src={message.text} alt="Message Image" />
+        <StyledTooltip title={message.sent_at} placement="top">
+          <StyledD>
+            <StyledMessageImg src={message.text} alt="Message Image" />
+          </StyledD>
+        </StyledTooltip>
       ) : message.text &&
         (message.text.includes(".mov") ||
           message.text.includes(".mp4") ||
           message.text.includes(".avi")) ? (
-        <video
-          src={message.text}
-          controls
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        ></video>
+        <StyledTooltip title={message.sent_at} placement="top">
+          <StyledD>
+            <video
+              src={message.text}
+              controls
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            ></video>
+          </StyledD>
+        </StyledTooltip>
+      ) : message.text && message.text.includes(".mp3") ? (
+        <StyledTooltip title={message.sent_at} placement="top">
+          <StyledD>
+            <audio
+              src={message.text}
+              controls
+              style={{
+                display: "block",
+              }}
+            ></audio>
+          </StyledD>
+        </StyledTooltip>
       ) : (
-        message.text
+        <StyledTooltip title={message.sent_at} placement="top">
+          <MessageActive>{message.text}</MessageActive>
+        </StyledTooltip>
       )}
-      <StyledTimestamp>{message.sent_at}</StyledTimestamp>
     </MessageType>
   );
 };

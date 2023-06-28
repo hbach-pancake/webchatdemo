@@ -17,3 +17,7 @@ export interface IMessage {
   sent_at: string;
   user: string;
 }
+
+export interface AppUser {
+  name: string;
+}

@@ -6,6 +6,7 @@ type Props = ReturnType<typeof useRecipient>;
 
 const StyledAvatar = styled(Avatar)`
   margin: 5px 15px 5px 5px;
+  position: relative;
 `;
 
 const RecipientAvatar = ({ recipient, recipientEmail }: Props) => {

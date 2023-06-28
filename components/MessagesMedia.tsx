@@ -3,8 +3,9 @@ import styled from "styled-components";
 import React from "react";
 
 const StyledImgAndVideo = styled.div`
-  width: 50%;
+  width: 32%;
   aspect-ratio: 1/1;
+  padding: 5px;
 `;
 
 const StyledMessageImg = styled.img`

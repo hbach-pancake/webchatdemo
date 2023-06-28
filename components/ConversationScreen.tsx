@@ -35,18 +35,17 @@ import {
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytes,
-  uploadBytesResumable,
-} from "firebase/storage";
+import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import InfomationAvatar from "./InfomationAvatar";
 import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 import MessagesMedia from "./MessagesMedia";
+import MicIcon from "@mui/icons-material/Mic";
+import StopIcon from "@mui/icons-material/Stop";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 const StyledRecipientHeader = styled.div`
   position: sticky;
@@ -57,9 +56,9 @@ const StyledRecipientHeader = styled.div`
   align-items: center;
   padding: 11px;
   height: 80px;
-  border-bottom: 1px solid whitesmoke;
-  border-left: 1px solid #9e9e9e61;
-  border-right: 1px solid #9e9e9e61;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  /* border-left: 1px solid #9e9e9e61;
+  border-right: 1px solid #9e9e9e61; */
 `;
 
 const StyledHeaderInfo = styled.div`
@@ -85,7 +84,6 @@ const StyledHeaderIcon = styled.div`
 
 const StyledMessageContainer = styled.div`
   padding: 30px;
-  background-color: #e5ded8;
   min-height: 90vh;
   position: relative;
 `;
@@ -136,6 +134,8 @@ const StyledInfomation = styled.div`
   overflow-y: scroll;
   height: 100vh;
   padding-top: 20px;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  padding-left: 15px;
 `;
 
 const StyleSpan = styled.div`
@@ -145,18 +145,33 @@ const StyleSpan = styled.div`
   cursor: pointer;
 `;
 
-const StyleFileImg = styled.div`
-  padding-top: 100px;
-  cursor: pointer;
+const StyleSpanName = styled.div`
+  padding-top: 10px;
   text-align: center;
   font-weight: bold;
-  padding-bottom: 20px;
+  cursor: pointer;
+  font-size: large;
+`;
+
+const StyleSpanMail = styled.div`
+  padding-top: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: medium;
+`;
+
+const StyleFileImg = styled.div`
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
 `;
 
 const StyledMedia = styled.div`
   width: 30%;
   overflow-y: scroll;
   height: 100vh;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
 `;
 
 const StyledMediaHeader = styled.div`
@@ -164,7 +179,7 @@ const StyledMediaHeader = styled.div`
   height: 80px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid whitesmoke;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 `;
 
 const StyledFile = styled.span`
@@ -173,6 +188,66 @@ const StyledFile = styled.span`
 
 const StyledMediaContent = styled.div`
   display: flex;
+  flex-wrap: wrap;
+`;
+
+const StatusDot = styled.div`
+  position: absolute;
+  top: 65%;
+  left: 40px;
+  transform: translate(50%, -50%);
+  width: 10px;
+  height: 10px;
+  background-color: #42b72a;
+  border-radius: 50%;
+  z-index: 1;
+`;
+
+const StyledCenter = styled.div`
+  text-align: center;
+  padding: 10px 0 20px 0;
+`;
+
+const InfoIconMr = styled(InfoIcon)`
+  color: #0084ff;
+`;
+
+const InsertEmoticonIcon1 = styled(InsertEmoticonIcon)`
+  color: #0084ff;
+  font-size: xx-large;
+`;
+
+const SendIcon1 = styled(SendIcon)`
+  color: #0084ff;
+`;
+
+const MicIcon1 = styled(MicIcon)`
+  color: #0084ff;
+`;
+
+const StopIcon1 = styled(StopIcon)`
+  color: red;
+`;
+
+const AttachFileIcon1 = styled(AttachFileIcon)`
+  color: #0084ff;
+`;
+
+const FolderOpenIcon1 = styled(FolderOpenIcon)`
+  padding-right: 10px;
+  font-size: xx-large;
+`;
+
+const DeleteOutlineIcon1 = styled(DeleteOutlineIcon)`
+  padding-right: 10px;
+  font-size: xx-large;
+`;
+
+const StyledFlex = styled.div`
+  display: flex;
+  padding-bottom: 20px;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const ConversationScreen = ({
@@ -230,38 +305,6 @@ const ConversationScreen = ({
     return null;
   };
 
-  const addMessageToDbAndUpdateLastSeen = async () => {
-    //update thowfi gian xem cuoi cua user
-    await setDoc(
-      doc(db, "user", loggedInUser?.email as string),
-      {
-        lastSeen: serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    //them tin nhan khi nhan tin vao messages
-    const messageRef = await addDoc(collection(db, "messages"), {
-      conversation_id: conversationId,
-      sent_at: serverTimestamp(),
-      text: newMessage,
-      user: loggedInUser?.email,
-    });
-
-    setNewMessage("");
-
-    scrollToBottom();
-  };
-
-  const sendMessageOnEnter: KeyboardEventHandler<HTMLInputElement> = (
-    event
-  ) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      if (!newMessage) return;
-      addMessageToDbAndUpdateLastSeen();
-    }
-  };
   const deleteMess: MouseEventHandler<HTMLDivElement> = async () => {
     try {
       //lay data trong collect messages
@@ -308,6 +351,39 @@ const ConversationScreen = ({
       }
     } catch (error) {
       console.error("Lỗi khi xóa tài liệu:", error);
+    }
+  };
+
+  const addMessageToDbAndUpdateLastSeen = async () => {
+    //update thowfi gian xem cuoi cua user
+    await setDoc(
+      doc(db, "user", loggedInUser?.email as string),
+      {
+        lastSeen: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    //them tin nhan khi nhan tin vao messages
+    const messageRef = await addDoc(collection(db, "messages"), {
+      conversation_id: conversationId,
+      sent_at: serverTimestamp(),
+      text: newMessage,
+      user: loggedInUser?.email,
+    });
+
+    setNewMessage("");
+
+    scrollToBottom();
+  };
+
+  const sendMessageOnEnter: KeyboardEventHandler<HTMLInputElement> = (
+    event
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (!newMessage) return;
+      addMessageToDbAndUpdateLastSeen();
     }
   };
 
@@ -359,7 +435,6 @@ const ConversationScreen = ({
             metadata
           );
           const downloadURL = await getDownloadURL(storageRef);
-          console.log(downloadURL, "downloadURL");
           setUploadedURL(downloadURL);
           setIsURLUploaded(true);
         } else if (
@@ -374,7 +449,6 @@ const ConversationScreen = ({
             metadata
           );
           const downloadURL = await getDownloadURL(storageRef);
-          console.log(downloadURL, "downloadURL");
           setUploadedURL(downloadURL);
           setIsURLUploaded(true);
         } else {
@@ -459,6 +533,114 @@ const ConversationScreen = ({
     setShowEmojiPicker(false);
   };
 
+  //chuc nang ghi am
+  const [isRecording, setIsRecording] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
+    null
+  );
+  const [chunks, setChunks] = useState<Blob[]>([]);
+  const [isRecordingComplete, setIsRecordingComplete] = useState(false);
+
+  const handleClick = async () => {
+    if (isRecording) {
+      if (mediaRecorder) {
+        // Dừng ghi âm
+        mediaRecorder.stop();
+        setIsRecording(false);
+
+        // Reset các biến trạng thái
+        setStream(null);
+        setMediaRecorder(null);
+        setChunks([]);
+      }
+    } else {
+      try {
+        // Truy cập vào microphone
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        setStream(stream);
+
+        // Bắt đầu ghi âm
+        const mediaRecorder = new MediaRecorder(stream);
+        setMediaRecorder(mediaRecorder);
+        setChunks([]);
+        mediaRecorder.addEventListener("dataavailable", (e) => {
+          if (e.data.size > 0) {
+            setChunks((prevChunks) => [...prevChunks, e.data]);
+          }
+        });
+
+        mediaRecorder.addEventListener("stop", () => {
+          setIsRecordingComplete(true);
+        });
+
+        mediaRecorder.start();
+        setIsRecording(true);
+      } catch (error) {
+        console.error("Lỗi khi truy cập microphone:", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const uploadData = async () => {
+      if (isRecordingComplete && chunks.length > 0) {
+        // Tạo Blob từ các mảnh đã ghi âm
+        const recordingBlob = new Blob(chunks, { type: "audio/mpeg" });
+        await uploadRecording(recordingBlob);
+
+        // Reset các biến trạng thái
+        setStream(null);
+        setMediaRecorder(null);
+        setChunks([]);
+        setIsRecordingComplete(false);
+
+        // Lưu trữ file ghi âm lên Firebase Storage
+      }
+    };
+
+    uploadData();
+  }, [isRecordingComplete, chunks]);
+
+  const generateRandomNumber = () => {
+    return Math.floor(Math.random() * 1000000);
+  };
+
+  const uploadRecording = async (recordingBlob: Blob) => {
+    const randomNumber = generateRandomNumber();
+    const storageRef = ref(storage, `recordings/${randomNumber}.mp3`);
+    const uploadTask = await uploadBytes(storageRef, recordingBlob);
+    const downloadURL = await getDownloadURL(storageRef);
+    console.log(downloadURL, "downloadURL");
+    await addMp3ToDbAndUpdateLastSeen(downloadURL);
+  };
+
+  const addMp3ToDbAndUpdateLastSeen = async (downloadURL: string) => {
+    if (downloadURL) {
+      //update thowfi gian xem cuoi cua user
+      await setDoc(
+        doc(db, "user", loggedInUser?.email as string),
+        {
+          lastSeen: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      //them tin nhan khi nhan tin vao messages\
+      await addDoc(collection(db, "messages"), {
+        conversation_id: conversationId,
+        sent_at: serverTimestamp(),
+        text: downloadURL,
+        user: loggedInUser?.email,
+      });
+
+      setIsURLUploaded(false);
+
+      scrollToBottom();
+    }
+  };
+
   return (
     <>
       <StyledContainer>
@@ -468,18 +650,21 @@ const ConversationScreen = ({
             recipientEmail={recipientEmail}
           />
           <StyledHeaderInfo>
-            <StyledH3>{recipientEmail}</StyledH3>
+            <StyledH3>{recipient?.name}</StyledH3>
             {recipient && (
-              <span>
-                Last active:{" "}
-                {convertFirestoreTimestampToString(recipient.lastSeen)}
-              </span>
+              <div>
+                <span>
+                  {convertFirestoreTimestampToString(recipient.lastSeen)}
+                </span>
+                {convertFirestoreTimestampToString(recipient.lastSeen) ===
+                  "Đang hoạt động" && <StatusDot />}
+              </div>
             )}
           </StyledHeaderInfo>
 
           <StyledHeaderIcon>
             <IconButton onClick={() => setShowInfo(!showInfo)}>
-              <InfoIcon />
+              <InfoIconMr />
             </IconButton>
           </StyledHeaderIcon>
         </StyledRecipientHeader>
@@ -500,7 +685,7 @@ const ConversationScreen = ({
 
         <StyledInputContainer>
           <IconButton onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
-            <InsertEmoticonIcon />
+            <InsertEmoticonIcon1 />
           </IconButton>
           <StyledInput
             id="message-input"
@@ -509,12 +694,11 @@ const ConversationScreen = ({
             onKeyDown={sendMessageOnEnter}
           />
           <IconButton onClick={sendMessageOnClick} disabled={!newMessage}>
-            <SendIcon />
+            <SendIcon1 />
           </IconButton>
-          {/* <IconButton>
-            <MicIcon />
-          </IconButton> */}
-          {/* <AudioRecorder /> */}
+          <IconButton onClick={handleClick}>
+            {isRecording ? <StopIcon1 /> : <MicIcon1 />}
+          </IconButton>
           <IconButton>
             <input
               type="file"
@@ -523,7 +707,7 @@ const ConversationScreen = ({
               style={{ display: "none" }}
               onChange={handleFileInputChange}
             />
-            <AttachFileIcon onClick={handleAttachFileClick} />
+            <AttachFileIcon1 onClick={handleAttachFileClick} />
           </IconButton>
         </StyledInputContainer>
       </StyledContainer>
@@ -534,16 +718,33 @@ const ConversationScreen = ({
             recipient={recipient}
             recipientEmail={recipientEmail}
           />
-          <StyleSpan>{recipientEmail}</StyleSpan>
-          <StyleFileImg
-            onClick={() => {
-              setShowInfoImg(!showInfoImg);
-              setShowInfo(!showInfo);
-            }}
-          >
-            File đã gửi{" "}
-          </StyleFileImg>
-          <StyleSpan onClick={deleteMess}>Xóa đoạn chat</StyleSpan>
+          <StyleSpanName>{recipient?.name}</StyleSpanName>
+          <StyleSpanMail>({recipientEmail})</StyleSpanMail>
+          {recipient && (
+            <StyledCenter>
+              <div>{convertFirestoreTimestampToString(recipient.lastSeen)}</div>
+              {convertFirestoreTimestampToString(recipient.lastSeen) ===
+                "Đang hoạt động"}
+            </StyledCenter>
+          )}
+          <StyledFlex>
+            <StyleFileImg
+              onClick={() => {
+                setShowInfoImg(!showInfoImg);
+                setShowInfo(!showInfo);
+              }}
+            >
+              <FolderOpenIcon1 />
+              File đã gửi{" "}
+            </StyleFileImg>
+            <ChevronRightIcon />
+          </StyledFlex>
+          <StyledFlex>
+            <StyleFileImg onClick={deleteMess}>
+              <DeleteOutlineIcon1 />
+              Xóa đoạn chat
+            </StyleFileImg>
+          </StyledFlex>
         </StyledInfomation>
       )}
 

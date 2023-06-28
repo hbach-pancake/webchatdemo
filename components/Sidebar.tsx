@@ -20,6 +20,7 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { Conversation } from "@/types";
 import ConversationSelect from "./ConversationSelect";
 import { useRouter } from "next/router";
+import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 
 const StyledContainer = styled.div`
   height: 100vh;
@@ -41,7 +42,6 @@ const StyledHeader = styled.div`
   align-items: center;
   padding: 15px;
   height: 80px;
-  border-bottom: 1px solid whitesmoke;
   position: sticky;
   top: 0;
   background-color: white;
@@ -51,21 +51,22 @@ const StyledHeader = styled.div`
 const StyledSearch = styled.div`
   display: flex;
   align-items: center;
-  padding: 15px;
-  border-radius: 2px;
+  padding: 5px;
+  border-radius: 50px;
+  border: 1px solid #fff;
+  outline: none;
+  background-color: #f0f2f5;
+  width: 90%;
+  margin: auto;
+  margin-bottom: 10px;
 `;
 
 const StyledSearchInput = styled.input`
   outline: none;
   border: none;
   flex: 1;
-`;
-
-const StyledSidebarButton = styled(Button)`
-  width: 100%;
-  border-top: 1px solid whitesmoke;
-  border-bottom: 1px solid whitesmoke;
-  font-weight: 700;
+  background-color: #f0f2f5;
+  padding-left: 5px;
 `;
 
 const StyledUserAvt = styled(Avatar)`
@@ -74,6 +75,8 @@ const StyledUserAvt = styled(Avatar)`
     opacity: 0.8;
   }
 `;
+
+const StyledFlex = styled.div``;
 
 const Sidebar = () => {
   const [loggedInUser, _loading, _error] = useAuthState(auth);
@@ -154,8 +157,6 @@ const Sidebar = () => {
       await addDoc(collection(db, "conversations"), {
         users: [loggedInUser?.email, recipientEmail],
       });
-    } else {
-      alert("email k hợp lệ");
     }
     closeNewConversationDialog();
   };
@@ -173,31 +174,28 @@ const Sidebar = () => {
         <Tooltip title={loggedInUser?.email as string} placement="right">
           <StyledUserAvt src={loggedInUser?.photoURL || ""} />
         </Tooltip>
-        <div>
+        <StyledFlex>
+          <IconButton
+            onClick={() => {
+              toggleNewConversationDialog(true);
+            }}
+          >
+            <PersonAddAlt1Icon />
+          </IconButton>
           <IconButton onClick={logout}>
             <LogoutIcon />
           </IconButton>
-        </div>
+        </StyledFlex>
       </StyledHeader>
-
       <StyledSearch>
         <SearchIcon />
         <StyledSearchInput
           value={recipientEmail}
           onChange={(event) => setRecipientEmail(event.target.value)}
           onKeyDown={findUserAndMessage}
-          placeholder="Tìm kiếm"
+          placeholder="Tìm kiếm cuộc trò chuyện"
         />
       </StyledSearch>
-
-      <StyledSidebarButton
-        onClick={() => {
-          toggleNewConversationDialog(true);
-        }}
-      >
-        Bắt đầu cuộc trò truyện mới
-      </StyledSidebarButton>
-
       {conversationsSnapshot?.docs.map((conversation) => (
         <ConversationSelect
           key={conversation.id}
@@ -205,7 +203,6 @@ const Sidebar = () => {
           conversationUsers={(conversation.data() as Conversation).users}
         />
       ))}
-
       <Dialog
         open={isOpenNewConversationDialog}
         onClose={closeNewConversationDialog}
