@@ -99,6 +99,7 @@ const StyledInputContainer = styled.form`
 `;
 
 const StyledInput = styled.input`
+  color: #000;
   flex-grow: 1;
   outline: none;
   border: none;

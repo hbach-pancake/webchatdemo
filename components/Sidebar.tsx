@@ -62,6 +62,7 @@ const StyledSearch = styled.div`
 `;
 
 const StyledSearchInput = styled.input`
+  color: #000;
   outline: none;
   border: none;
   flex: 1;
