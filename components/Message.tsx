@@ -3,18 +3,12 @@ import { IMessage } from "@/types";
 import { useAuthState } from "react-firebase-hooks/auth";
 import styled from "styled-components";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import React, { useEffect, useState } from "react";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-} from "firebase/firestore";
+import React, { useState } from "react";
+import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import Tooltip from "@mui/material/Tooltip";
-import { useRouter } from "next/router";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 
-const DeleteButton = styled(DeleteForeverIcon)`
+const DeleteButton = styled(MoreHorizIcon)`
   position: absolute;
   top: calc(50% - 12px);
   left: 0px;
@@ -67,6 +61,19 @@ const StyledTooltip = styled(Tooltip)`
   position: relative;
 `;
 
+const StyledSum = styled.div`
+  color: #000;
+  top: calc(50% - 53px);
+  left: -24%;
+  position: absolute;
+  padding: 10px;
+  border: 1px solid #fff;
+  box-shadow: 0 0 6px rgb(0 0 0 / 58%);
+  border-radius: 10px;
+  width: 130px;
+  cursor: pointer;
+`;
+
 const Message = ({ message }: { message: IMessage }) => {
   const [loggedInUser, _loading, _error] = useAuthState(auth);
   const isSentMessage = loggedInUser?.email === message.user;
@@ -81,6 +88,7 @@ const Message = ({ message }: { message: IMessage }) => {
 
   const handleMouseLeave = () => {
     setIsHovered(false);
+    setShowPop(false);
   };
 
   const deleteMessage = async () => {
@@ -98,13 +106,24 @@ const Message = ({ message }: { message: IMessage }) => {
       console.error("Lỗi khi lấy tài liệu:", error);
     }
   };
+  const [showPop, setShowPop] = useState(false);
 
   return (
     <MessageType
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {isHovered && isSentMessage && <DeleteButton onClick={deleteMessage} />}
+      {isHovered && isSentMessage && (
+        <Tooltip title="Tùy chọn" placement="bottom">
+          <DeleteButton
+            onClick={() => {
+              setShowPop(!showPop);
+            }}
+          />
+        </Tooltip>
+      )}
+
+      {showPop && <StyledSum onClick={deleteMessage}>Xóa, gỡ</StyledSum>}
 
       {isSentMessage ? (
         message.text &&
