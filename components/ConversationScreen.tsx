@@ -47,6 +47,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import Tooltip from "@mui/material/Tooltip";
+import VideocamIcon from "@mui/icons-material/Videocam";
 
 const StyledRecipientHeader = styled.div`
   position: sticky;
@@ -220,6 +221,10 @@ const MicIcon1 = styled(MicIcon)`
   color: #0084ff;
 `;
 
+const VideocamIcon1 = styled(VideocamIcon)`
+  color: #0084ff;
+`;
+
 const StopIcon1 = styled(StopIcon)`
   color: red;
 `;
@@ -334,12 +339,12 @@ const ConversationScreen = ({
       const querySnapshot3 = await getDocs(collection(db, "conversations"));
       let firstMessageId2 = "";
       if (querySnapshot3.docs.length == 0) {
-        window.location.href = `http://localhost:3000`;
+        window.location.href = `https://webchatdemo.vercel.app/`;
       } else {
         querySnapshot3.forEach(async (docSnapshot) => {
           if (!firstMessageId2) {
             const messagesId2 = docSnapshot.id;
-            window.location.href = `http://localhost:3000/conversations/${messagesId2}`;
+            window.location.href = `https://webchatdemo.vercel.app/conversations/${messagesId2}`;
             return;
           }
         });
@@ -666,9 +671,20 @@ const ConversationScreen = ({
           </StyledHeaderInfo>
 
           <StyledHeaderIcon>
-            <IconButton onClick={() => setShowInfo(!showInfo)}>
-              <InfoIconMr />
-            </IconButton>
+            <Tooltip title="Bắt đầu gọi video" placement="bottom">
+              <IconButton
+                onClick={() =>
+                  alert("Tính năng vẫn đang trong quá trình phát triển")
+                }
+              >
+                <VideocamIcon1 />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Thông tin về cuộc trò chuyện" placement="bottom">
+              <IconButton onClick={() => setShowInfo(!showInfo)}>
+                <InfoIconMr />
+              </IconButton>
+            </Tooltip>
           </StyledHeaderIcon>
         </StyledRecipientHeader>
         <StyledMessageContainer>
