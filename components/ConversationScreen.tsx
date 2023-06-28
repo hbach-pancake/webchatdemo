@@ -46,6 +46,7 @@ import StopIcon from "@mui/icons-material/Stop";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import Tooltip from "@mui/material/Tooltip";
 
 const StyledRecipientHeader = styled.div`
   position: sticky;
@@ -686,31 +687,39 @@ const ConversationScreen = ({
         )}
 
         <StyledInputContainer>
-          <IconButton onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
-            <InsertEmoticonIcon1 />
-          </IconButton>
+          <Tooltip title="Chọn biểu tượng cảm xúc" placement="bottom">
+            <IconButton onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+              <InsertEmoticonIcon1 />
+            </IconButton>
+          </Tooltip>
           <StyledInput
             id="message-input"
             value={newMessage}
             onChange={(event) => setNewMessage(event.target.value)}
             onKeyDown={sendMessageOnEnter}
           />
-          <IconButton onClick={sendMessageOnClick} disabled={!newMessage}>
-            <SendIcon1 />
-          </IconButton>
-          <IconButton onClick={handleClick}>
-            {isRecording ? <StopIcon1 /> : <MicIcon1 />}
-          </IconButton>
-          <IconButton>
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              onChange={handleFileInputChange}
-            />
-            <AttachFileIcon1 onClick={handleAttachFileClick} />
-          </IconButton>
+          <Tooltip title="Nhấn Enter để gửi" placement="bottom">
+            <IconButton onClick={sendMessageOnClick} disabled={!newMessage}>
+              <SendIcon1 />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Gửi clip âm thanh" placement="bottom">
+            <IconButton onClick={handleClick}>
+              {isRecording ? <StopIcon1 /> : <MicIcon1 />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Đính kèm file" placement="bottom">
+            <IconButton>
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleFileInputChange}
+              />
+              <AttachFileIcon1 onClick={handleAttachFileClick} />
+            </IconButton>
+          </Tooltip>
         </StyledInputContainer>
       </StyledContainer>
 

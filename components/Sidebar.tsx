@@ -176,16 +176,20 @@ const Sidebar = () => {
           <StyledUserAvt src={loggedInUser?.photoURL || ""} />
         </Tooltip>
         <StyledFlex>
-          <IconButton
-            onClick={() => {
-              toggleNewConversationDialog(true);
-            }}
-          >
-            <PersonAddAlt1Icon />
-          </IconButton>
-          <IconButton onClick={logout}>
-            <LogoutIcon />
-          </IconButton>
+          <Tooltip title="Tạo cuộc trò chuyện mới" placement="bottom">
+            <IconButton
+              onClick={() => {
+                toggleNewConversationDialog(true);
+              }}
+            >
+              <PersonAddAlt1Icon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Đăng xuất" placement="bottom">
+            <IconButton onClick={logout}>
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
         </StyledFlex>
       </StyledHeader>
       <StyledSearch>

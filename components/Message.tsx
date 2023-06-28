@@ -3,9 +3,16 @@ import { IMessage } from "@/types";
 import { useAuthState } from "react-firebase-hooks/auth";
 import styled from "styled-components";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import React, { useState } from "react";
-import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+} from "firebase/firestore";
 import Tooltip from "@mui/material/Tooltip";
+import { useRouter } from "next/router";
 
 const DeleteButton = styled(DeleteForeverIcon)`
   position: absolute;
@@ -32,7 +39,6 @@ const StyledSend = styled(StyleMessage)`
 `;
 
 const StyledReceive = styled(StyleMessage)`
-  background-color: #e4e6eb;
   padding: 8px 12px;
   color: #000;
 `;
@@ -50,6 +56,13 @@ const StyledDev = styled.div`
   background-color: #0084ff;
   border-radius: 18px;
 `;
+
+const StyledDevIt = styled.div`
+  padding: 8px 12px;
+  background-color: #e4e6eb;
+  border-radius: 18px;
+`;
+
 const StyledTooltip = styled(Tooltip)`
   position: relative;
 `;
@@ -58,8 +71,9 @@ const Message = ({ message }: { message: IMessage }) => {
   const [loggedInUser, _loading, _error] = useAuthState(auth);
   const isSentMessage = loggedInUser?.email === message.user;
   const [isHovered, setIsHovered] = useState(false);
+
   const MessageType = isSentMessage ? StyledSend : StyledReceive;
-  const MessageActive = isSentMessage ? StyledDev : StyledD;
+  // const MessageActive = isSentMessage ? StyledDev : StyledD;
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -73,7 +87,6 @@ const Message = ({ message }: { message: IMessage }) => {
     try {
       // Lấy tất cả các tài liệu trong collection "messages"
       const querySnapshot = await getDocs(collection(db, "messages"));
-      console.log("id", querySnapshot);
       querySnapshot.forEach((docSnapshot) => {
         const documentId = docSnapshot.id;
         if (documentId == message.id) {
@@ -92,13 +105,62 @@ const Message = ({ message }: { message: IMessage }) => {
       onMouseLeave={handleMouseLeave}
     >
       {isHovered && isSentMessage && <DeleteButton onClick={deleteMessage} />}
-      {message.text &&
-      (message.text.includes(".jpg") ||
-        message.text.includes(".heic") ||
-        message.text.includes(".png") ||
-        message.text.includes(".jpeg") ||
-        message.text.includes(".svg") ||
-        message.text.includes(".gif")) ? (
+
+      {isSentMessage ? (
+        message.text &&
+        (message.text.includes(".jpg") ||
+          message.text.includes(".heic") ||
+          message.text.includes(".png") ||
+          message.text.includes(".jpeg") ||
+          message.text.includes(".svg") ||
+          message.text.includes(".gif")) ? (
+          <StyledTooltip title={message.sent_at} placement="top">
+            <StyledD>
+              <StyledMessageImg src={message.text} alt="Message Image" />
+            </StyledD>
+          </StyledTooltip>
+        ) : message.text &&
+          (message.text.includes(".mov") ||
+            message.text.includes(".mp4") ||
+            message.text.includes(".avi")) ? (
+          <StyledTooltip title={message.sent_at} placement="top">
+            <StyledD>
+              <video
+                src={message.text}
+                controls
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              ></video>
+            </StyledD>
+          </StyledTooltip>
+        ) : message.text && message.text.includes(".mp3") ? (
+          <StyledTooltip title={message.sent_at} placement="top">
+            <StyledD>
+              <audio
+                src={message.text}
+                controls
+                style={{
+                  display: "block",
+                }}
+              ></audio>
+            </StyledD>
+          </StyledTooltip>
+        ) : (
+          <StyledTooltip title={message.sent_at} placement="top">
+            <StyledDev>{message.text}</StyledDev>
+          </StyledTooltip>
+        )
+      ) : message.text &&
+        (message.text.includes(".jpg") ||
+          message.text.includes(".heic") ||
+          message.text.includes(".png") ||
+          message.text.includes(".jpeg") ||
+          message.text.includes(".svg") ||
+          message.text.includes(".gif")) ? (
         <StyledTooltip title={message.sent_at} placement="top">
           <StyledD>
             <StyledMessageImg src={message.text} alt="Message Image" />
@@ -136,7 +198,7 @@ const Message = ({ message }: { message: IMessage }) => {
         </StyledTooltip>
       ) : (
         <StyledTooltip title={message.sent_at} placement="top">
-          <MessageActive>{message.text}</MessageActive>
+          <StyledDevIt>{message.text}</StyledDevIt>
         </StyledTooltip>
       )}
     </MessageType>
