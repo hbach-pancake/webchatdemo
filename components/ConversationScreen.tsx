@@ -371,6 +371,8 @@ const ConversationScreen = ({
     scrollToBottom();
   };
 
+  const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+
   const sendMessageOnEnter: KeyboardEventHandler<HTMLInputElement> = (
     event
   ) => {
@@ -381,11 +383,17 @@ const ConversationScreen = ({
     }
   };
 
-  // const sendMessageOnClick: MouseEventHandler<HTMLButtonElement> = (event) => {
-  //   event.preventDefault();
-  //   if (!newMessage) return;
-  //   addMessageToDbAndUpdateLastSeen();
-  // };
+  const sendMessageOnClick: MouseEventHandler<HTMLButtonElement> = (event) => {
+    event.preventDefault();
+    if (!newMessage) return;
+    addMessageToDbAndUpdateLastSeen();
+  };
+
+  const handleSendMessage:
+    | KeyboardEventHandler<HTMLInputElement>
+    | MouseEventHandler<HTMLButtonElement> = isMac
+    ? sendMessageOnEnter
+    : sendMessageOnClick;
 
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -687,7 +695,7 @@ const ConversationScreen = ({
             onChange={(event) => setNewMessage(event.target.value)}
             onKeyDown={sendMessageOnEnter}
           />
-          <IconButton disabled={!newMessage}>
+          <IconButton onClick={sendMessageOnClick} disabled={!newMessage}>
             <SendIcon1 />
           </IconButton>
           <IconButton onClick={handleClick}>
