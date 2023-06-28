@@ -712,7 +712,7 @@ const ConversationScreen = ({
             <IconButton>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*, video/*"
                 ref={fileInputRef}
                 style={{ display: "none" }}
                 onChange={handleFileInputChange}
