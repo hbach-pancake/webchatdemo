@@ -650,7 +650,7 @@ const ConversationScreen = ({
             recipientEmail={recipientEmail}
           />
           <StyledHeaderInfo>
-            <StyledH3>{recipient?.name}</StyledH3>
+            <StyledH3>{recipient?.name || recipientEmail}</StyledH3>
             {recipient && (
               <div>
                 <span>
