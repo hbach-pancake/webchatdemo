@@ -81,8 +81,8 @@ const StyledTooltip = styled(Tooltip)`
 
 const StyledSum = styled.div`
   color: #000;
-  top: calc(50% - 53px);
-  left: -24%;
+  top: calc(50% - 40px);
+  left: -130px;
   position: absolute;
   padding: 10px;
   border: 1px solid #fff;
@@ -90,6 +90,8 @@ const StyledSum = styled.div`
   border-radius: 10px;
   width: 130px;
   cursor: pointer;
+  background-color: #fff;
+  z-index: 2;
 `;
 
 const StyledAvt = styled.img`
