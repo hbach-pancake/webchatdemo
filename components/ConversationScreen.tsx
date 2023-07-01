@@ -863,7 +863,7 @@ const ConversationScreen = ({
             </IconButton>
           </Tooltip>
           <Tooltip title="Đính kèm file" placement="bottom">
-            <IconButton>
+            <IconButton onClick={handleAttachFileClick}>
               <input
                 type="file"
                 accept="image/*, video/*"
@@ -871,7 +871,7 @@ const ConversationScreen = ({
                 style={{ display: "none" }}
                 onChange={handleFileInputChange}
               />
-              <AttachFileIcon1 onClick={handleAttachFileClick} />
+              <AttachFileIcon1 />
             </IconButton>
           </Tooltip>
         </StyledInputContainer>

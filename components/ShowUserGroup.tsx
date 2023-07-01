@@ -103,7 +103,7 @@ const ShowUserGroup = ({ recipients, recipientEmails, dataGroup }: Props) => {
     <>
       {newDataGroup.map((item: any, index: any) => {
         return (
-          <StyledContainerFlex>
+          <StyledContainerFlex key={index}>
             <StyledContainerInfo>
               {item.photoURL ? (
                 <StyledAvatar src={item.photoURL} />

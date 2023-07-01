@@ -9,8 +9,6 @@ const EmojiPickerComponent = () => {
     setSelectedEmoji(emoji.native);
   };
 
-  console.log(selectedEmoji, "selectedEmoji");
-
   return (
     <Picker
       data={data}
