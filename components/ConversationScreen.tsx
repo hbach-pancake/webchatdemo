@@ -853,9 +853,11 @@ const ConversationScreen = ({
             onKeyDown={sendMessageOnEnter}
           />
           <Tooltip title="Nhấn Enter để gửi" placement="bottom">
-            <IconButton onClick={sendMessageOnClick} disabled={!newMessage}>
-              <SendIcon1 />
-            </IconButton>
+            <span>
+              <IconButton onClick={sendMessageOnClick} disabled={!newMessage}>
+                <SendIcon1 />
+              </IconButton>
+            </span>
           </Tooltip>
           <Tooltip title="Gửi clip âm thanh" placement="bottom">
             <IconButton onClick={handleClick}>
