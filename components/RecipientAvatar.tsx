@@ -19,7 +19,7 @@ const RecipientAvatar = ({ recipients, recipientEmails }: Props) => {
           let avatar = recipients?.find((el) => el.email === recipientEmails);
           if (avatar)
             return (
-              <StyledAvatar>
+              <StyledAvatar key={index}>
                 {
                   <img
                     style={{
@@ -34,7 +34,9 @@ const RecipientAvatar = ({ recipients, recipientEmails }: Props) => {
             );
           else
             return (
-              <StyledAvatar>{recipientEmails[0].toUpperCase()}</StyledAvatar>
+              <StyledAvatar key={index}>
+                {recipientEmails[0].toUpperCase()}
+              </StyledAvatar>
             );
         }
       })}
