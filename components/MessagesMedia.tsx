@@ -13,8 +13,13 @@ const StyledMessageImg = styled.img`
   width: 100%;
   height: 100%;
 `;
+const Notifi = styled.div`
+  font-size: 14px;
+  color: gray;
+`;
 
 const MessagesMedia = ({ message }: { message: IMessage }) => {
+  console.log(message, "messagemessagemessage");
   const MessageType = StyledImgAndVideo;
   if (
     message.text.includes(".jpg") ||

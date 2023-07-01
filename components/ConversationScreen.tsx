@@ -1,5 +1,5 @@
 import { useRecipient } from "@/hooks/useRecipient";
-import { Conversation, IMessage } from "@/types";
+import { AppUser, Conversation, IMessage } from "@/types";
 import styled from "styled-components";
 import RecipientAvatar from "./RecipientAvatar";
 import {
@@ -38,16 +38,16 @@ import {
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
-import InfomationAvatar from "./InfomationAvatar";
-import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 import MessagesMedia from "./MessagesMedia";
 import MicIcon from "@mui/icons-material/Mic";
 import StopIcon from "@mui/icons-material/Stop";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import Tooltip from "@mui/material/Tooltip";
 import VideocamIcon from "@mui/icons-material/Videocam";
+import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ShowUserGroup from "./ShowUserGroup";
 
 const StyledRecipientHeader = styled.div`
   position: sticky;
@@ -59,11 +59,10 @@ const StyledRecipientHeader = styled.div`
   padding: 11px;
   height: 80px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  /* border-left: 1px solid #9e9e9e61;
-  border-right: 1px solid #9e9e9e61; */
 `;
 
 const StyledHeaderInfo = styled.div`
+  margin-left: 10px;
   flex-grow: 1;
   > h3 {
     margin-top: 0;
@@ -76,8 +75,18 @@ const StyledHeaderInfo = styled.div`
   }
 `;
 
+const Notifi = styled.div`
+  font-size: 14px;
+  color: gray;
+`;
+
 const StyledH3 = styled.h3`
-  word-break: break-all;
+  width: 20%;
+  overflow: hidden;
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
 `;
 
 const StyledHeaderIcon = styled.div`
@@ -142,19 +151,14 @@ const StyledInfomation = styled.div`
 `;
 
 const StyleSpanName = styled.div`
-  padding-top: 10px;
+  padding: 10px 0;
   text-align: center;
   font-weight: bold;
   cursor: pointer;
   font-size: large;
 `;
 
-const StyleSpanMail = styled.div`
-  padding-top: 10px;
-  text-align: center;
-  cursor: pointer;
-  font-size: medium;
-`;
+const StyledUserContent = styled.div``;
 
 const StyleFileImg = styled.div`
   cursor: pointer;
@@ -164,22 +168,28 @@ const StyleFileImg = styled.div`
 `;
 
 const StyledMedia = styled.div`
-  width: 30%;
-  overflow-y: scroll;
-  height: 100vh;
-  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  display: none;
+  &.show {
+    display: block;
+    padding-bottom: 10px;
+  }
+  &.showing {
+    display: block;
+    padding-bottom: 10px;
+  }
 `;
 
-const StyledMediaHeader = styled.div`
-  padding: 11px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-`;
+const StyledExpandMoreIcon = styled(ExpandMoreIcon)`
+  transition: transform 0.3s ease-in-out;
+  transform: rotate(0deg);
 
-const StyledFile = styled.span`
-  font-weight: bold;
+  &.expanded {
+    transform: rotate(180deg);
+  }
+
+  &.expanding {
+    transform: rotate(180deg);
+  }
 `;
 
 const StyledMediaContent = styled.div`
@@ -189,6 +199,18 @@ const StyledMediaContent = styled.div`
 
 const StatusDot = styled.div`
   position: absolute;
+  top: 70%;
+  left: 50px;
+  transform: translate(50%, -50%);
+  width: 10px;
+  height: 10px;
+  background-color: #42b72a;
+  border-radius: 50%;
+  z-index: 1;
+`;
+
+const StatusDot1 = styled.div`
+  position: absolute;
   top: 65%;
   left: 40px;
   transform: translate(50%, -50%);
@@ -197,6 +219,11 @@ const StatusDot = styled.div`
   background-color: #42b72a;
   border-radius: 50%;
   z-index: 1;
+`;
+
+const StyledPadding = styled.div`
+  padding: 10px 0;
+  text-align: center;
 `;
 
 const StyledCenter = styled.div`
@@ -238,6 +265,11 @@ const FolderOpenIcon1 = styled(FolderOpenIcon)`
   font-size: xx-large;
 `;
 
+const SupervisorAccountIcon1 = styled(SupervisorAccountIcon)`
+  padding-right: 10px;
+  font-size: xx-large;
+`;
+
 const DeleteOutlineIcon1 = styled(DeleteOutlineIcon)`
   padding-right: 10px;
   font-size: xx-large;
@@ -248,6 +280,7 @@ const StyledFlex = styled.div`
   padding-bottom: 20px;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
 `;
 
 const ConversationScreen = ({
@@ -262,13 +295,16 @@ const ConversationScreen = ({
 
   const conversationUsers = conversation.users;
 
-  const { recipientEmail, recipient } = useRecipient(conversationUsers);
+  const { recipientEmails, recipients } = useRecipient(conversationUsers);
 
   const router = useRouter();
   const conversationId = router.query.id;
   const queryGetMessages = generateQueryGetMessages(conversationId as string);
   const [messagesSnapShot, messagesLoading, __error] =
     useCollection(queryGetMessages);
+
+  console.log(messagesSnapShot, "messagesSnapShot");
+  console.log(messagesLoading, "messagesLoading");
 
   const showMessages = () => {
     //neu dang load tin nhan
@@ -297,12 +333,26 @@ const ConversationScreen = ({
     }
     //neu da hoan thanh viec load tin nhan tu ssr
     if (messagesSnapShot) {
-      return messagesSnapShot.docs.map((message) => (
-        <MessagesMedia key={message.id} message={transformMessage(message)} />
-      ));
+      if (messagesSnapShot.docs.length == 0) {
+        <Notifi>Không có file phương tiện nào</Notifi>;
+      } else {
+        return messagesSnapShot.docs.map((message) => (
+          <MessagesMedia key={message.id} message={transformMessage(message)} />
+        ));
+      }
     }
 
     return null;
+  };
+
+  const showUserGroup = () => {
+    return (
+      <ShowUserGroup
+        dataGroup={dataGroup}
+        recipients={recipients}
+        recipientEmails={recipientEmails}
+      />
+    );
   };
 
   const deleteMess: MouseEventHandler<HTMLDivElement> = async () => {
@@ -339,12 +389,12 @@ const ConversationScreen = ({
       const querySnapshot3 = await getDocs(collection(db, "conversations"));
       let firstMessageId2 = "";
       if (querySnapshot3.docs.length == 0) {
-        window.location.href = `https://webchatdemo.vercel.app/`;
+        window.location.href = `http://localhost:3000/`;
       } else {
         querySnapshot3.forEach(async (docSnapshot) => {
           if (!firstMessageId2) {
             const messagesId2 = docSnapshot.id;
-            window.location.href = `https://webchatdemo.vercel.app/conversations/${messagesId2}`;
+            window.location.href = `http://localhost:3000/conversations/${messagesId2}`;
             return;
           }
         });
@@ -518,7 +568,20 @@ const ConversationScreen = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const [showInfo, setShowInfo] = useState(false);
-  const [showInfoImg, setShowInfoImg] = useState(false);
+  const [showMedia, setShowMedia] = useState(false);
+  const [showUser, setShowUser] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [expanding, setExpanding] = useState(false);
+
+  const toggleMedia = () => {
+    setShowMedia(!showMedia);
+    setExpanded(!expanded);
+  };
+
+  const toggleUser = () => {
+    setShowUser(!showUser);
+    setExpanding(!expanding);
+  };
 
   const insertEmoji = (emoji: any) => {
     const textarea = document.getElementById(
@@ -621,7 +684,6 @@ const ConversationScreen = ({
     const storageRef = ref(storage, `recordings/${randomNumber}.mp3`);
     const uploadTask = await uploadBytes(storageRef, recordingBlob);
     const downloadURL = await getDownloadURL(storageRef);
-    console.log(downloadURL, "downloadURL");
     await addMp3ToDbAndUpdateLastSeen(downloadURL);
   };
 
@@ -649,24 +711,100 @@ const ConversationScreen = ({
     }
   };
 
+  const [dataGroup, setDataGroup] = useState<string[]>([]);
+
+  const checkGroup = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "conversations"));
+      let isGroup = false;
+      const promises = [];
+
+      for (const docSnapshot of querySnapshot.docs) {
+        const idConversations = docSnapshot.id;
+
+        if (idConversations === conversationId) {
+          const dataConversations = doc(db, "conversations", idConversations);
+          const promise = getDoc(dataConversations);
+          promises.push(promise);
+        }
+      }
+
+      const documentSnapshots = await Promise.all(promises);
+
+      for (const docSnapshot of documentSnapshots) {
+        const documentDataConversations = docSnapshot.data();
+        if (
+          documentDataConversations &&
+          documentDataConversations.key === "group"
+        ) {
+          isGroup = true;
+          setDataGroup(documentDataConversations.users);
+          break;
+        }
+      }
+      return isGroup;
+    } catch (error) {
+      console.error("Lỗi khi xử lý:", error);
+      return false;
+    }
+  };
+
+  const [isGroup, setIsGroup] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const result = await checkGroup();
+      setIsGroup(result);
+    };
+
+    fetchData();
+  }, [conversationId]);
+
+  const active = recipients?.some(
+    (el) => convertFirestoreTimestampToString(el.lastSeen) === "Đang hoạt động"
+  );
+
   return (
     <>
       <StyledContainer>
         <StyledRecipientHeader>
           <RecipientAvatar
-            recipient={recipient}
-            recipientEmail={recipientEmail}
+            recipients={recipients}
+            recipientEmails={recipientEmails}
           />
+          {recipients?.length == 1 && (
+            <div>
+              {convertFirestoreTimestampToString(recipients[0].lastSeen) ===
+                "Đang hoạt động" && <StatusDot />}
+            </div>
+          )}
           <StyledHeaderInfo>
-            <StyledH3>{recipient?.name || recipientEmail}</StyledH3>
-            {recipient && (
-              <div>
-                <span>
-                  {convertFirestoreTimestampToString(recipient.lastSeen)}
-                </span>
-                {convertFirestoreTimestampToString(recipient.lastSeen) ===
-                  "Đang hoạt động" && <StatusDot />}
-              </div>
+            <StyledH3>
+              {recipientEmails
+                .map((recipientEmails) => {
+                  let avatar = recipients?.find(
+                    (el) => el.email === recipientEmails
+                  );
+                  if (avatar) return avatar.name;
+                  else return recipientEmails;
+                })
+                .join(", ")}
+            </StyledH3>
+            {recipientEmails.length > 1 ? (
+              active ? (
+                <>
+                  <StatusDot1 />
+                  <span>Đang hoạt động</span>
+                </>
+              ) : (
+                ""
+              )
+            ) : recipients && recipients[0] ? (
+              <span>
+                {convertFirestoreTimestampToString(recipients[0].lastSeen)}
+              </span>
+            ) : (
+              ""
             )}
           </StyledHeaderInfo>
 
@@ -741,31 +879,89 @@ const ConversationScreen = ({
 
       {showInfo && (
         <StyledInfomation>
-          <InfomationAvatar
-            recipient={recipient}
-            recipientEmail={recipientEmail}
-          />
-          <StyleSpanName>{recipient?.name}</StyleSpanName>
-          <StyleSpanMail>({recipientEmail})</StyleSpanMail>
-          {recipient && (
-            <StyledCenter>
-              <div>{convertFirestoreTimestampToString(recipient.lastSeen)}</div>
-              {convertFirestoreTimestampToString(recipient.lastSeen) ===
-                "Đang hoạt động"}
-            </StyledCenter>
+          <StyledCenter>
+            <div className="Avata_info_group">
+              <RecipientAvatar
+                recipients={recipients}
+                recipientEmails={recipientEmails}
+              />
+            </div>
+          </StyledCenter>
+          <StyleSpanName>
+            {recipientEmails
+              .map((recipientEmails) => {
+                let avatar = recipients?.find(
+                  (el) => el.email === recipientEmails
+                );
+                if (avatar) return avatar.name;
+                else return recipientEmails;
+              })
+              .toString()}
+
+            {recipients?.length == 1 && (
+              <div>
+                {convertFirestoreTimestampToString(recipients[0].lastSeen) ===
+                  "Đang hoạt động"}
+              </div>
+            )}
+          </StyleSpanName>
+          {recipientEmails.length > 1 ? (
+            active ? (
+              <>
+                <StyledPadding>Đang hoạt động</StyledPadding>
+              </>
+            ) : (
+              ""
+            )
+          ) : recipients && recipients[0] ? (
+            ""
+          ) : (
+            ""
           )}
-          <StyledFlex>
-            <StyleFileImg
-              onClick={() => {
-                setShowInfoImg(!showInfoImg);
-                setShowInfo(!showInfo);
-              }}
-            >
+          {recipientEmails.length > 1 ? (
+            active ? (
+              ""
+            ) : (
+              ""
+            )
+          ) : recipients && recipients[0] ? (
+            <StyledCenter>
+              {convertFirestoreTimestampToString(recipients[0].lastSeen)}
+            </StyledCenter>
+          ) : (
+            ""
+          )}
+
+          <StyledFlex onClick={toggleMedia}>
+            <StyleFileImg>
               <FolderOpenIcon1 />
-              File đã gửi{" "}
+              File đã gửi
             </StyleFileImg>
-            <ChevronRightIcon />
+            <StyledExpandMoreIcon className={expanded ? "expanded" : ""} />
           </StyledFlex>
+          {/* show ra tệp đa gửi */}
+          <StyledMedia className={showMedia ? "show" : ""}>
+            <StyledMediaContent>{showFileMedia()}</StyledMediaContent>
+          </StyledMedia>
+          {/* hết */}
+          {isGroup ? (
+            <div>
+              <StyledFlex onClick={toggleUser}>
+                <StyleFileImg>
+                  <SupervisorAccountIcon1 />
+                  Thành viên trong nhóm
+                </StyleFileImg>
+                <StyledExpandMoreIcon
+                  className={expanding ? "expanding" : ""}
+                />
+              </StyledFlex>
+              <StyledMedia className={showUser ? "showing" : ""}>
+                <StyledUserContent>{showUserGroup()}</StyledUserContent>
+              </StyledMedia>
+            </div>
+          ) : (
+            ""
+          )}
           <StyledFlex>
             <StyleFileImg onClick={deleteMess}>
               <DeleteOutlineIcon1 />
@@ -773,23 +969,6 @@ const ConversationScreen = ({
             </StyleFileImg>
           </StyledFlex>
         </StyledInfomation>
-      )}
-
-      {showInfoImg && (
-        <StyledMedia>
-          <StyledMediaHeader>
-            <IconButton
-              onClick={() => {
-                setShowInfoImg(!showInfoImg);
-                setShowInfo(!showInfo);
-              }}
-            >
-              <KeyboardBackspaceIcon />
-            </IconButton>
-            <StyledFile>File đã gửi</StyledFile>
-          </StyledMediaHeader>
-          <StyledMediaContent>{showFileMedia()}</StyledMediaContent>
-        </StyledMedia>
       )}
     </>
   );

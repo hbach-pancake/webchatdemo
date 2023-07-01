@@ -1,5 +1,5 @@
 @import "fonts.css";
-:root  {
+:root {
   --max-width: 1100px;
   --border-radius: 12px;
   --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
@@ -100,4 +100,25 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+/* avataa */
+.Avata_info_group .doubleAvata {
+  scale: 1.5;
+}
+
+.doubleAvata {
+  position: relative;
+  display: inline-block;
+}
+.doubleAvata > :first-child {
+  position: absolute;
+  bottom: -7px;
+  left: -7px;
+  scale: 0.7;
+  z-index: 2;
+}
+.doubleAvata > :last-child {
+  scale: 0.7;
+  transform: translate(7px, -7px);
 }

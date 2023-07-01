@@ -8,20 +8,26 @@ import { useCollection } from "react-firebase-hooks/firestore";
 export const useRecipient = (conversationUsers: Conversation["users"]) => {
   const [loggedInUser, _loading, _error] = useAuthState(auth);
 
-  const recipientEmail = getRecipientEmail(conversationUsers, loggedInUser);
+  const recipientEmails = getRecipientEmail(conversationUsers, loggedInUser);
 
   const queryGetRecipient = query(
     collection(db, "users"),
-    where("email", "==", recipientEmail)
+    where(
+      "email",
+      "in",
+      recipientEmails.reduce((acc: any, email: any) => acc.concat([email]), [])
+    )
   );
 
   const [recipientsSnapshot, __loading, __error] =
     useCollection(queryGetRecipient);
 
-  const recipient = recipientsSnapshot?.docs[0]?.data() as AppUser | undefined;
+  const recipients = recipientsSnapshot?.docs.map((doc) => doc.data()) as
+    | AppUser[]
+    | undefined;
 
   return {
-    recipient,
-    recipientEmail,
+    recipients,
+    recipientEmails,
   };
 };

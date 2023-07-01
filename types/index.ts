@@ -8,6 +8,7 @@ export interface AppUser {
   email: string;
   lastSeen: Timestamp;
   photoURL: string;
+  name: string;
 }
 
 export interface IMessage {
@@ -16,8 +17,4 @@ export interface IMessage {
   text: string;
   sent_at: string;
   user: string;
-}
-
-export interface AppUser {
-  name: string;
 }

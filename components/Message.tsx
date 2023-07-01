@@ -2,7 +2,6 @@ import { auth, db } from "@/config/firebase";
 import { IMessage } from "@/types";
 import { useAuthState } from "react-firebase-hooks/auth";
 import styled from "styled-components";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import React, { useState } from "react";
 import {
   collection,
@@ -29,6 +28,7 @@ const StyleMessage = styled.div`
   max-width: 30%;
   margin: 5px;
   border-radius: 30px;
+  margin-bottom: 10px;
 `;
 const StyledSend = styled(StyleMessage)`
   margin-left: auto;
@@ -47,6 +47,8 @@ const StyledMessageImg = styled.img`
   width: 100%;
   height: auto;
   display: block;
+  border: 1px solid #d8d8d8;
+  border-radius: 10px;
 `;
 
 const StyledD = styled.div`

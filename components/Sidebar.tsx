@@ -98,6 +98,10 @@ const Sidebar = () => {
     toggleNewConversationDialog(false);
   };
 
+  const recipientEmailsArray = recipientEmail
+    .split(",")
+    .map((email) => email.trim());
+
   const queryGetConversationsForCurrentUser = query(
     collection(db, "conversations"),
     where("users", "array-contains", loggedInUser?.email)
@@ -107,12 +111,45 @@ const Sidebar = () => {
     queryGetConversationsForCurrentUser
   );
 
-  const isConversationAlreadyExists = (recipientEmail: string) =>
-    conversationsSnapshot?.docs.find((conversation) =>
-      (conversation.data() as Conversation).users.includes(recipientEmail)
-    );
+  const isConversationAlreadyExists = (recipientEmails: string[]) =>
+    !!conversationsSnapshot?.docs.find((conversation) => {
+      const conversationUsers = (conversation.data() as Conversation).users;
+      return (
+        recipientEmails.every((email) => conversationUsers.includes(email)) &&
+        conversationUsers.length === recipientEmails.length
+      );
+    });
 
-  const isInvitingSelf = recipientEmail === loggedInUser?.email;
+  const isInvitingSelf =
+    loggedInUser?.email !== null &&
+    loggedInUser?.email !== undefined &&
+    recipientEmailsArray.includes(loggedInUser.email);
+
+  const isValidEmails = recipientEmailsArray.every((email) =>
+    EmailValidator.validate(email)
+  );
+
+  const createConversation = async () => {
+    if (!recipientEmail) return;
+
+    if (isValidEmails) {
+      if (isConversationAlreadyExists(recipientEmailsArray) == false) {
+        if (loggedInUser && loggedInUser.email) {
+          recipientEmailsArray.unshift(loggedInUser.email);
+          await addDoc(collection(db, "conversations"), {
+            users: recipientEmailsArray,
+            key: "group",
+          });
+        }
+      } else {
+        alert("Cuộc trò truyện đã tồn tại, vui lòng kiểm tra lại");
+      }
+    } else {
+      alert("email không hợp lệ, vui lòng kiểm tra lại");
+    }
+    closeNewConversationDialog();
+  };
+
   const router = useRouter();
 
   const findUserAndMessage: KeyboardEventHandler<HTMLInputElement> = (
@@ -147,24 +184,11 @@ const Sidebar = () => {
     return null;
   };
 
-  const createConversation = async () => {
-    if (!recipientEmail) return;
-
-    if (
-      EmailValidator.validate(recipientEmail) &&
-      !isInvitingSelf &&
-      !isConversationAlreadyExists(recipientEmail)
-    ) {
-      await addDoc(collection(db, "conversations"), {
-        users: [loggedInUser?.email, recipientEmail],
-      });
-    }
-    closeNewConversationDialog();
-  };
   // cos sawn recipientAvatar. khi click input thif render ra
   const logout = async () => {
     try {
       await signOut(auth);
+      window.location.href = `http://localhost:3000/`;
     } catch (error) {
       console.log("Lỗi khi đăng xuất ", error);
     }
@@ -215,7 +239,8 @@ const Sidebar = () => {
         <DialogTitle>Cuộc trò truyện mới</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Nhập địa chỉ email mà bạn muốn tạo trò chuyện.
+            Nhập địa chỉ email. Nếu tạo nhóm, bạn có thể nhập nhiều email và
+            ngăn cách bởi dấu phẩy.
           </DialogContentText>
           <TextField
             autoFocus

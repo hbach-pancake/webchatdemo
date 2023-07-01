@@ -24,6 +24,7 @@ const ConversationInfo = styled.div`
   display: flex;
   align-items: center;
   position: relative;
+  margin-right: 10px;
 `;
 
 const StatusDot = styled.div`
@@ -37,6 +38,14 @@ const StatusDot = styled.div`
   border-radius: 50%;
 `;
 
+const StyledName = styled.span`
+  overflow: hidden;
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+`;
+
 const ConversationSelect = ({
   id,
   conversationUsers,
@@ -44,30 +53,16 @@ const ConversationSelect = ({
   id: string;
   conversationUsers: Conversation["users"];
 }) => {
-  const { recipient, recipientEmail } = useRecipient(conversationUsers);
-  const name = recipient?.name;
+  const { recipients, recipientEmails } = useRecipient(conversationUsers);
   const router = useRouter();
 
   const onSelectConversation = () => {
     router.push(`/conversations/${id}`);
   };
-  if (!recipient || !recipientEmail) {
-    return (
-      <StyledContainer
-        onClick={onSelectConversation}
-        data-clicked={router.query.id === id}
-      >
-        <ConversationInfo>
-          <RecipientAvatar
-            recipient={recipient}
-            recipientEmail={recipientEmail}
-          />
-        </ConversationInfo>
-        <span>{recipientEmail}</span>
-      </StyledContainer>
-    );
-  }
 
+  const active = recipients?.some(
+    (el) => convertFirestoreTimestampToString(el.lastSeen) === "Đang hoạt động"
+  );
   return (
     <StyledContainer
       onClick={onSelectConversation}
@@ -75,13 +70,32 @@ const ConversationSelect = ({
     >
       <ConversationInfo>
         <RecipientAvatar
-          recipient={recipient}
-          recipientEmail={recipientEmail}
+          recipients={recipients}
+          recipientEmails={recipientEmails}
         />
-        {convertFirestoreTimestampToString(recipient.lastSeen) ===
-          "Đang hoạt động" && <StatusDot />}
+
+        {recipientEmails.length > 1 ? (
+          active ? (
+            <StatusDot />
+          ) : (
+            ""
+          )
+        ) : recipients && recipients[0] ? (
+          convertFirestoreTimestampToString(recipients[0].lastSeen) ===
+            "Đang hoạt động" && <StatusDot />
+        ) : (
+          ""
+        )}
       </ConversationInfo>
-      <span>{name}</span>
+      <StyledName>
+        {recipientEmails
+          .map((recipientEmails) => {
+            let avatar = recipients?.find((el) => el.email === recipientEmails);
+            if (avatar) return avatar.name;
+            else return recipientEmails;
+          })
+          .join(", ")}
+      </StyledName>
     </StyledContainer>
   );
 };

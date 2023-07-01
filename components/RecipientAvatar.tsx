@@ -5,17 +5,41 @@ import styled from "styled-components";
 type Props = ReturnType<typeof useRecipient>;
 
 const StyledAvatar = styled(Avatar)`
-  margin: 5px 15px 5px 5px;
+  margin: auto;
   position: relative;
+  width: 50px;
+  height: 50px;
 `;
 
-const RecipientAvatar = ({ recipient, recipientEmail }: Props) => {
-  return recipient?.photoURL ? (
-    <StyledAvatar src={recipient.photoURL} />
-  ) : (
-    <StyledAvatar>
-      {recipientEmail && recipientEmail[0].toUpperCase()}
-    </StyledAvatar>
+const RecipientAvatar = ({ recipients, recipientEmails }: Props) => {
+  return (
+    <div className={recipientEmails.length > 1 ? "doubleAvata" : ""}>
+      {recipientEmails.map((recipientEmails, index) => {
+        if (index < 2) {
+          let avatar = recipients?.find((el) => el.email === recipientEmails);
+          if (avatar)
+            return (
+              <StyledAvatar>
+                {
+                  <img
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                    }}
+                    src={avatar.photoURL}
+                    alt="Recipient Avatar"
+                  />
+                }
+              </StyledAvatar>
+            );
+          else
+            return (
+              <StyledAvatar>{recipientEmails[0].toUpperCase()}</StyledAvatar>
+            );
+        }
+      })}
+      {}
+    </div>
   );
 };
 
