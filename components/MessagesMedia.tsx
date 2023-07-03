@@ -6,16 +6,13 @@ const StyledImgAndVideo = styled.div`
   width: 49%;
   aspect-ratio: 1/1;
   padding: 5px;
+  display: inline-block;
 `;
 
 const StyledMessageImg = styled.img`
   object-fit: cover;
   width: 100%;
   height: 100%;
-`;
-const Notifi = styled.div`
-  font-size: 14px;
-  color: gray;
 `;
 
 const MessagesMedia = ({ message }: { message: IMessage }) => {

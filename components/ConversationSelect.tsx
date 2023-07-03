@@ -29,8 +29,8 @@ const ConversationInfo = styled.div`
 
 const StatusDot = styled.div`
   position: absolute;
-  top: 75%;
-  right: 20px;
+  top: 80%;
+  right: 9px;
   transform: translate(50%, -50%);
   width: 10px;
   height: 10px;

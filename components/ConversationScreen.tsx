@@ -32,8 +32,10 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   serverTimestamp,
   setDoc,
+  where,
 } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import Picker from "@emoji-mart/react";
@@ -76,6 +78,7 @@ const StyledHeaderInfo = styled.div`
 `;
 
 const Notifi = styled.div`
+  text-align: center;
   font-size: 14px;
   color: gray;
 `;
@@ -158,6 +161,16 @@ const StyleSpanName = styled.div`
   font-size: large;
 `;
 
+const StyledTitle = styled.div`
+  overflow: hidden;
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+`;
+
+const StyledPls = styled.div``;
+
 const StyledUserContent = styled.div``;
 
 const StyleFileImg = styled.div`
@@ -192,10 +205,7 @@ const StyledExpandMoreIcon = styled(ExpandMoreIcon)`
   }
 `;
 
-const StyledMediaContent = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-`;
+const StyledMediaContent = styled.div``;
 
 const StatusDot = styled.div`
   position: absolute;
@@ -294,6 +304,7 @@ const ConversationScreen = ({
   const [loggedInUser, _loading, _error] = useAuthState(auth);
 
   const conversationUsers = conversation.users;
+  console.log(conversationUsers, "conversationUsers");
 
   const { recipientEmails, recipients } = useRecipient(conversationUsers);
 
@@ -303,8 +314,14 @@ const ConversationScreen = ({
   const [messagesSnapShot, messagesLoading, __error] =
     useCollection(queryGetMessages);
 
-  console.log(messagesSnapShot, "messagesSnapShot");
-  console.log(messagesLoading, "messagesLoading");
+  const queryGetConversationsForCurrentUser = query(
+    collection(db, "conversations"),
+    where("users", "array-contains", loggedInUser?.email)
+  );
+
+  const [conversationsSnapshot, __loading] = useCollection(
+    queryGetConversationsForCurrentUser
+  );
 
   const showMessages = () => {
     //neu dang load tin nhan
@@ -342,7 +359,11 @@ const ConversationScreen = ({
       }
     }
 
-    return null;
+    return (
+      <Notifi>
+        <p>Không có file phương tiện nào</p>
+      </Notifi>
+    );
   };
 
   const showUserGroup = () => {
@@ -353,6 +374,25 @@ const ConversationScreen = ({
         recipientEmails={recipientEmails}
       />
     );
+  };
+
+  const routerLink = async () => {
+    const querySnapshot3 = await getDocs(collection(db, "conversations"));
+    querySnapshot3.forEach(async (docSnapshot) => {
+      const moreId = docSnapshot.id;
+      const dataUserConversation = doc(db, "conversations", moreId);
+      const getDocumentDataMess = await getDoc(dataUserConversation);
+      const documentDataMess = getDocumentDataMess.data();
+      if (documentDataMess) {
+        const conversationIdMess = documentDataMess.users;
+        if (conversationIdMess.includes(loggedInUser?.email)) {
+          const foundMoreId = moreId;
+          return router.push(`/conversations/${foundMoreId}`);
+        } else {
+          window.location.href = `https://webchatdemo.vercel.app/`;
+        }
+      }
+    });
   };
 
   const deleteMess: MouseEventHandler<HTMLDivElement> = async () => {
@@ -385,20 +425,7 @@ const ConversationScreen = ({
       );
       // Xóa tài liệu
       await deleteDoc(documentRef);
-
-      const querySnapshot3 = await getDocs(collection(db, "conversations"));
-      let firstMessageId2 = "";
-      if (querySnapshot3.docs.length == 0) {
-        window.location.href = `http://localhost:3000/`;
-      } else {
-        querySnapshot3.forEach(async (docSnapshot) => {
-          if (!firstMessageId2) {
-            const messagesId2 = docSnapshot.id;
-            window.location.href = `http://localhost:3000/conversations/${messagesId2}`;
-            return;
-          }
-        });
-      }
+      await routerLink();
     } catch (error) {
       console.error("Lỗi khi xóa tài liệu:", error);
     }
@@ -758,7 +785,7 @@ const ConversationScreen = ({
     };
 
     fetchData();
-  }, [conversationId]);
+  }, [conversationsSnapshot, conversationId]);
 
   const active = recipients?.some(
     (el) => convertFirestoreTimestampToString(el.lastSeen) === "Đang hoạt động"
@@ -865,7 +892,7 @@ const ConversationScreen = ({
             </IconButton>
           </Tooltip>
           <Tooltip title="Đính kèm file" placement="bottom">
-            <IconButton onClick={handleAttachFileClick}>
+            <StyledPls>
               <input
                 type="file"
                 accept="image/*, video/*"
@@ -873,8 +900,10 @@ const ConversationScreen = ({
                 style={{ display: "none" }}
                 onChange={handleFileInputChange}
               />
-              <AttachFileIcon1 />
-            </IconButton>
+              <IconButton onClick={handleAttachFileClick}>
+                <AttachFileIcon1 />
+              </IconButton>
+            </StyledPls>
           </Tooltip>
         </StyledInputContainer>
       </StyledContainer>
@@ -890,22 +919,24 @@ const ConversationScreen = ({
             </div>
           </StyledCenter>
           <StyleSpanName>
-            {recipientEmails
-              .map((recipientEmails) => {
-                let avatar = recipients?.find(
-                  (el) => el.email === recipientEmails
-                );
-                if (avatar) return avatar.name;
-                else return recipientEmails;
-              })
-              .toString()}
+            <StyledTitle>
+              {recipientEmails
+                .map((recipientEmails) => {
+                  let avatar = recipients?.find(
+                    (el) => el.email === recipientEmails
+                  );
+                  if (avatar) return avatar.name;
+                  else return recipientEmails;
+                })
+                .toString()}
 
-            {recipients?.length == 1 && (
-              <div>
-                {convertFirestoreTimestampToString(recipients[0].lastSeen) ===
-                  "Đang hoạt động"}
-              </div>
-            )}
+              {recipients?.length == 1 && (
+                <div>
+                  {convertFirestoreTimestampToString(recipients[0].lastSeen) ===
+                    "Đang hoạt động"}
+                </div>
+              )}
+            </StyledTitle>
           </StyleSpanName>
           {recipientEmails.length > 1 ? (
             active ? (
@@ -964,12 +995,16 @@ const ConversationScreen = ({
           ) : (
             ""
           )}
-          <StyledFlex>
-            <StyleFileImg onClick={deleteMess}>
-              <DeleteOutlineIcon1 />
-              Xóa đoạn chat
-            </StyleFileImg>
-          </StyledFlex>
+          {isGroup ? (
+            ""
+          ) : (
+            <StyledFlex>
+              <StyleFileImg onClick={deleteMess}>
+                <DeleteOutlineIcon1 />
+                Xóa đoạn chat
+              </StyleFileImg>
+            </StyledFlex>
+          )}
         </StyledInfomation>
       )}
     </>

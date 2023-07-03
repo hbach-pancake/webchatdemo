@@ -133,13 +133,19 @@ const Sidebar = () => {
     if (!recipientEmail) return;
 
     if (isValidEmails) {
-      if (isConversationAlreadyExists(recipientEmailsArray) == false) {
+      if (!isConversationAlreadyExists(recipientEmailsArray)) {
         if (loggedInUser && loggedInUser.email) {
           recipientEmailsArray.unshift(loggedInUser.email);
-          await addDoc(collection(db, "conversations"), {
-            users: recipientEmailsArray,
-            key: "group",
-          });
+          if (recipientEmailsArray.length > 2) {
+            await addDoc(collection(db, "conversations"), {
+              users: recipientEmailsArray,
+              key: "group",
+            });
+          } else {
+            await addDoc(collection(db, "conversations"), {
+              users: recipientEmailsArray,
+            });
+          }
         }
       } else {
         alert("Cuộc trò truyện đã tồn tại, vui lòng kiểm tra lại");
@@ -188,7 +194,7 @@ const Sidebar = () => {
   const logout = async () => {
     try {
       await signOut(auth);
-      window.location.href = `http://localhost:3000/`;
+      window.location.href = `https://webchatdemo.vercel.app/`;
     } catch (error) {
       console.log("Lỗi khi đăng xuất ", error);
     }

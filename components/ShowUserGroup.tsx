@@ -1,4 +1,4 @@
-import { auth } from "@/config/firebase";
+import { auth, db } from "@/config/firebase";
 import { AppUser } from "@/types";
 import { useAuthState } from "react-firebase-hooks/auth";
 import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
@@ -13,6 +13,17 @@ import { DialogActions, TextField } from "@mui/material";
 import Button from "@mui/material/Button";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import Tooltip from "@mui/material/Tooltip";
+import { useState } from "react";
+import * as EmailValidator from "email-validator";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+} from "firebase/firestore";
+import { useRouter } from "next/router";
+import IconButton from "@mui/material/IconButton";
 
 type Props = {
   dataGroup: string[];
@@ -78,6 +89,9 @@ const AddIcon1 = styled(AddIcon)`
 
 const ShowUserGroup = ({ recipients, recipientEmails, dataGroup }: Props) => {
   const [loggedInUser, _loading, _error] = useAuthState(auth);
+  // const cloneDataGroup = (dataGroup: string[]): string[] => {
+  //   return dataGroup.slice();
+  // };
 
   const newRecipients = recipients
     ? [
@@ -97,7 +111,137 @@ const ShowUserGroup = ({ recipients, recipientEmails, dataGroup }: Props) => {
       : [...acc, { email: item, name: item, photoURL: null }];
   }, []);
 
-  console.log(newDataGroup, "newDataGroup");
+  const [isOpenNewConversationDialog, setIsOpenNewConversationDialog] =
+    useState(false);
+
+  const [isOpenNotifi, setIsOpenNotifi] = useState(false);
+
+  const [addrecipientEmail, setAddRecipientEmail] = useState("");
+
+  const toggleNewConversationDialog = (isOpen: boolean) => {
+    if (newDataGroup[0].email != loggedInUser?.email) {
+      setIsOpenNotifi(isOpen);
+    } else {
+      setIsOpenNewConversationDialog(isOpen);
+    }
+    if (!isOpen) {
+      setAddRecipientEmail("");
+    }
+  };
+
+  const closeNewConversationDialog = () => {
+    toggleNewConversationDialog(false);
+  };
+
+  const recipientEmailsArray = addrecipientEmail
+    .split(",")
+    .map((email) => email.trim());
+
+  const isValidEmails = recipientEmailsArray.every((email) =>
+    EmailValidator.validate(email)
+  );
+
+  const router = useRouter();
+  const conversationsId: string =
+    typeof router.query.id === "string" ? router.query.id : "";
+
+  const checkEmailsExistence = (
+    addrecipientEmail: string[],
+    cloneDataGroup: string[]
+  ): boolean => {
+    return !addrecipientEmail.some((email) => cloneDataGroup.includes(email));
+  };
+
+  const addConversation = async () => {
+    if (!addrecipientEmail) return;
+
+    if (isValidEmails) {
+      if (checkEmailsExistence(recipientEmailsArray, dataGroup)) {
+        try {
+          const mergedArray = [...dataGroup, ...recipientEmailsArray];
+          const documentRef = doc(db, "conversations", conversationsId);
+          await updateDoc(documentRef, {
+            key: "group",
+            users: mergedArray,
+          });
+          // router.reload();
+        } catch (error) {
+          console.error("Lỗi khi cập nhật dữ liệu:", error);
+        }
+      } else {
+        alert("Người dùng đã có trong cuộc trò chuyện!");
+      }
+    } else {
+      alert("email không hợp lệ, vui lòng kiểm tra lại");
+    }
+    router.reload();
+    closeNewConversationDialog();
+  };
+
+  const [selectedEmail, setSelectedEmail] = useState("");
+  const [selectedOutEmail, setSelectedOutEmail] = useState("");
+  const [openDialog, setOpenDialog] = useState(false);
+  const [outDialog, setOutDialog] = useState(false);
+
+  const handleIconButtonClick = (email: any) => {
+    setSelectedEmail(email);
+    setOpenDialog(true);
+  };
+
+  const handleOutClick = (email: any) => {
+    setSelectedOutEmail(email);
+    setOutDialog(true);
+  };
+
+  const routerNext = async () => {
+    const querySnapshot = await getDocs(collection(db, "conversations"));
+    querySnapshot.forEach(async (docSnapshot) => {
+      // lay ra cac id trong collect conversation
+      const moreId = docSnapshot.id;
+      // lấy data trong từng id
+      const dataUserConversation = doc(db, "conversations", moreId);
+      const getDocumentDataMess = await getDoc(dataUserConversation);
+      const documentDataMess = getDocumentDataMess.data();
+      if (documentDataMess) {
+        const conversationIdMess = documentDataMess.users;
+        if (conversationIdMess.includes(loggedInUser?.email)) {
+          const foundMoreId = moreId;
+          return router.push(`/conversations/${foundMoreId}`);
+        } else {
+          return (window.location.href = `https://webchatdemo.vercel.app/`);
+        }
+      }
+    });
+  };
+
+  const handleOutUser = async () => {
+    const updatedDataGroup = dataGroup.filter(
+      (item) => item !== selectedOutEmail
+    );
+    const documentRef = doc(db, "conversations", conversationsId);
+    await updateDoc(documentRef, {
+      key: "group",
+      users: updatedDataGroup,
+    });
+
+    await routerNext();
+
+    setOutDialog(false);
+  };
+
+  const handleDeleteUser = async () => {
+    const updatedDataGroup = dataGroup.filter((item) => item !== selectedEmail);
+    const documentRef = doc(db, "conversations", conversationsId);
+    await updateDoc(documentRef, {
+      key: "group",
+      users: updatedDataGroup,
+    });
+    router.reload();
+    setOpenDialog(false);
+  };
+
+  // console.log(dataGroup, "dataGroup");
+  // console.log(newDataGroup, "newDataGroup");
 
   return (
     <>
@@ -126,12 +270,16 @@ const ShowUserGroup = ({ recipients, recipientEmails, dataGroup }: Props) => {
               ""
             ) : (
               <Tooltip title="Xóa thành viên" placement="bottom">
-                <GroupRemoveIcon />
+                <IconButton onClick={() => handleIconButtonClick(item.email)}>
+                  <GroupRemoveIcon />
+                </IconButton>
               </Tooltip>
             )}
             {item.email == loggedInUser?.email ? (
               <Tooltip title="Rời nhóm" placement="bottom">
-                <ExitToAppIcon />
+                <IconButton onClick={() => handleOutClick(item.email)}>
+                  <ExitToAppIcon />
+                </IconButton>
               </Tooltip>
             ) : (
               ""
@@ -140,20 +288,24 @@ const ShowUserGroup = ({ recipients, recipientEmails, dataGroup }: Props) => {
         );
       })}
       <StyledContainerFlex>
-        <StyledContainerInfo>
+        <StyledContainerInfo
+          onClick={() => {
+            toggleNewConversationDialog(true);
+          }}
+        >
           <AddIcon1 />
           <StyledUser>Thêm người</StyledUser>
         </StyledContainerInfo>
       </StyledContainerFlex>
-      {/* <Dialog
+      <Dialog
         open={isOpenNewConversationDialog}
         onClose={closeNewConversationDialog}
       >
-        <DialogTitle>Cuộc trò truyện mới</DialogTitle>
+        <DialogTitle>Thêm thành viên</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Nhập địa chỉ email. Nếu tạo nhóm, bạn có thể nhập nhiều email và
-            ngăn cách bởi dấu phẩy.
+            Nhập địa chỉ email. Bạn có thể nhập nhiều email và ngăn cách bởi dấu
+            phẩy.
           </DialogContentText>
           <TextField
             autoFocus
@@ -161,19 +313,63 @@ const ShowUserGroup = ({ recipients, recipientEmails, dataGroup }: Props) => {
             type="email"
             fullWidth
             variant="standard"
-            value={recipientEmail}
+            value={addrecipientEmail}
             onChange={(event) => {
-              setRecipientEmail(event.target.value);
+              setAddRecipientEmail(event.target.value);
             }}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={closeNewConversationDialog}>Hủy</Button>
-          <Button disabled={!recipientEmail} onClick={createConversation}>
+          <Button disabled={!addrecipientEmail} onClick={addConversation}>
             Thêm mới
           </Button>
         </DialogActions>
-      </Dialog> */}
+      </Dialog>
+
+      <Dialog open={isOpenNotifi} onClose={closeNewConversationDialog}>
+        <DialogTitle>Thông báo</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Chỉ có chủ phòng mới thêm được thành viên
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeNewConversationDialog}>Hủy</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        {/* Nội dung và các thành phần khác trong Dialog */}
+        <DialogTitle>Xác nhận xóa</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Bạn có chắc chắn muốn xóa thành viên có email: {selectedEmail}?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>Hủy</Button>
+          <Button onClick={handleDeleteUser} autoFocus>
+            Xác nhận
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={outDialog} onClose={() => setOutDialog(false)}>
+        {/* Nội dung và các thành phần khác trong Dialog */}
+        <DialogTitle>Xác nhận rời đi</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Bạn có chắc chắn muốn rời khỏi nhóm?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOutDialog(false)}>Hủy</Button>
+          <Button onClick={handleOutUser} autoFocus>
+            Xác nhận
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
