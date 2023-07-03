@@ -193,7 +193,15 @@ const ShowUserGroup = ({ recipients, recipientEmails, dataGroup }: Props) => {
     setOutDialog(true);
   };
 
-  const routerNext = async () => {
+  const handleOutUser = async () => {
+    const updatedDataGroup = dataGroup.filter(
+      (item) => item !== selectedOutEmail
+    );
+    const documentRef = doc(db, "conversations", conversationsId);
+    await updateDoc(documentRef, {
+      key: "group",
+      users: updatedDataGroup,
+    });
     const querySnapshot = await getDocs(collection(db, "conversations"));
     querySnapshot.forEach(async (docSnapshot) => {
       // lay ra cac id trong collect conversation
@@ -212,19 +220,6 @@ const ShowUserGroup = ({ recipients, recipientEmails, dataGroup }: Props) => {
         }
       }
     });
-  };
-
-  const handleOutUser = async () => {
-    const updatedDataGroup = dataGroup.filter(
-      (item) => item !== selectedOutEmail
-    );
-    const documentRef = doc(db, "conversations", conversationsId);
-    await updateDoc(documentRef, {
-      key: "group",
-      users: updatedDataGroup,
-    });
-
-    await routerNext();
 
     setOutDialog(false);
   };

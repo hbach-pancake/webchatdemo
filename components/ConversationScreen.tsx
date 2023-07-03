@@ -376,25 +376,6 @@ const ConversationScreen = ({
     );
   };
 
-  const routerLink = async () => {
-    const querySnapshot3 = await getDocs(collection(db, "conversations"));
-    querySnapshot3.forEach(async (docSnapshot) => {
-      const moreId = docSnapshot.id;
-      const dataUserConversation = doc(db, "conversations", moreId);
-      const getDocumentDataMess = await getDoc(dataUserConversation);
-      const documentDataMess = getDocumentDataMess.data();
-      if (documentDataMess) {
-        const conversationIdMess = documentDataMess.users;
-        if (conversationIdMess.includes(loggedInUser?.email)) {
-          const foundMoreId = moreId;
-          return router.push(`/conversations/${foundMoreId}`);
-        } else {
-          window.location.href = `https://webchatdemo.vercel.app/`;
-        }
-      }
-    });
-  };
-
   const deleteMess: MouseEventHandler<HTMLDivElement> = async () => {
     try {
       //lay data trong collect messages
@@ -425,7 +406,23 @@ const ConversationScreen = ({
       );
       // Xóa tài liệu
       await deleteDoc(documentRef);
-      await routerLink();
+
+      const querySnapshot3 = await getDocs(collection(db, "conversations"));
+      querySnapshot3.forEach(async (docSnapshot) => {
+        const moreId = docSnapshot.id;
+        const dataUserConversation = doc(db, "conversations", moreId);
+        const getDocumentDataMess = await getDoc(dataUserConversation);
+        const documentDataMess = getDocumentDataMess.data();
+        if (documentDataMess) {
+          const conversationIdMess = documentDataMess.users;
+          if (conversationIdMess.includes(loggedInUser?.email)) {
+            const foundMoreId = moreId;
+            return router.push(`/conversations/${foundMoreId}`);
+          } else {
+            window.location.href = `https://webchatdemo.vercel.app/`;
+          }
+        }
+      });
     } catch (error) {
       console.error("Lỗi khi xóa tài liệu:", error);
     }
