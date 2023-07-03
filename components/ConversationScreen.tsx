@@ -304,7 +304,6 @@ const ConversationScreen = ({
   const [loggedInUser, _loading, _error] = useAuthState(auth);
 
   const conversationUsers = conversation.users;
-  console.log(conversationUsers, "conversationUsers");
 
   const { recipientEmails, recipients } = useRecipient(conversationUsers);
 

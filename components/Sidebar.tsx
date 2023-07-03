@@ -11,11 +11,19 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
-import { TextField, DialogActions, Autocomplete } from "@mui/material";
+import { TextField, DialogActions, Autocomplete, Chip } from "@mui/material";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { KeyboardEventHandler, useState } from "react";
+import { KeyboardEventHandler, useEffect, useState } from "react";
 import * as EmailValidator from "email-validator";
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { Conversation } from "@/types";
 import ConversationSelect from "./ConversationSelect";
@@ -200,6 +208,86 @@ const Sidebar = () => {
     }
   };
 
+  const [otherUsersEmails, setOtherUsersEmails] = useState<string[]>([]);
+
+  const getOtherUsersEmails = async () => {
+    const querySnapshot = await getDocs(collection(db, "conversations"));
+    const otherUsersEmails: string[] = [];
+    const temporarySet = new Set<string>(); // Mảng tạm thời để kiểm tra email trùng lặp
+
+    await Promise.all(
+      querySnapshot.docs.map(async (docSnapshot) => {
+        const moreId = docSnapshot.id;
+        const dataUserConversation = doc(db, "conversations", moreId);
+        const getDocumentDataMess = await getDoc(dataUserConversation);
+        const documentDataMess = getDocumentDataMess.data();
+
+        if (documentDataMess) {
+          const conversationIdMess = documentDataMess.users;
+
+          if (conversationIdMess.includes(loggedInUser?.email)) {
+            const otherEmails = conversationIdMess.filter(
+              (email: any) => email !== loggedInUser?.email
+            );
+
+            // Loại bỏ các email trùng lặp trước khi thêm vào mảng
+            otherEmails.forEach((email: string) => temporarySet.add(email));
+          }
+        }
+      })
+    );
+
+    temporarySet.forEach((email: string) => otherUsersEmails.push(email)); // Thêm các email duy nhất vào mảng chính
+
+    setOtherUsersEmails(otherUsersEmails);
+  };
+
+  console.log(otherUsersEmails, "otherUsersEmails");
+
+  const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
+
+  const [mail, setMail] = useState("");
+
+  const handleEmailChange = (event: any) => {
+    const { value } = event.target;
+    setMail(value);
+
+    const filteredSuggestions = otherUsersEmails.filter(
+      (email: any) =>
+        typeof value === "string" &&
+        email.toLowerCase().includes(value.toLowerCase())
+    );
+    setEmailSuggestions(filteredSuggestions);
+  };
+
+  const handleEmailSelect = (
+    event: React.ChangeEvent<{}>,
+    value: string | null
+  ) => {
+    if (value) {
+      setRecipientEmail((prevEmail) =>
+        prevEmail ? prevEmail + "," + value : value
+      );
+      setMail("");
+    }
+  };
+
+  const handleEmailDelete = (index: number) => {
+    setRecipientEmail((prevEmail) => {
+      const emails = prevEmail.split(",");
+      emails.splice(index, 1);
+      return emails.join(",");
+    });
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await getOtherUsersEmails();
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <StyledContainer>
       <StyledHeader>
@@ -249,17 +337,37 @@ const Sidebar = () => {
             Nhập địa chỉ email. Nếu tạo nhóm, bạn có thể nhập nhiều email và
             ngăn cách bởi dấu phẩy.
           </DialogContentText>
-          <TextField
-            autoFocus
-            label="Email Address"
-            type="email"
-            fullWidth
-            variant="standard"
-            value={recipientEmail}
-            onChange={(event) => {
-              setRecipientEmail(event.target.value);
-            }}
-          />
+          <div>
+            <Autocomplete
+              freeSolo
+              options={emailSuggestions}
+              value={null}
+              inputValue={mail}
+              onInputChange={handleEmailChange}
+              onChange={handleEmailSelect}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  autoFocus
+                  label="Email Address"
+                  type="email"
+                  fullWidth
+                  variant="standard"
+                  value={mail}
+                  onChange={handleEmailChange}
+                />
+              )}
+            />
+            <div>
+              {recipientEmail.split(",").map((email, index) => (
+                <Chip
+                  key={index}
+                  label={email}
+                  onDelete={() => handleEmailDelete(index)}
+                />
+              ))}
+            </div>
+          </div>
         </DialogContent>
         <DialogActions>
           <Button onClick={closeNewConversationDialog}>Hủy</Button>
