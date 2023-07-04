@@ -334,8 +334,8 @@ const Sidebar = () => {
         <DialogTitle>Cuộc trò truyện mới</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Nhập địa chỉ email. Nếu tạo nhóm, bạn có thể nhập nhiều email và
-            ngăn cách bởi dấu phẩy.
+            Nhập địa chỉ email. Nếu tạo nhóm, bạn có thể nhập email và ENTER sau
+            mỗi email nhập vào.
           </DialogContentText>
           <div>
             <Autocomplete
